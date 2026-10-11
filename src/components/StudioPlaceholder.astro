@@ -1,0 +1,31 @@
+---
+/**
+ * The poster studio as it first appears, drawn when the site is built. It stands in for the
+ * studio until that has loaded, so the page has its final shape from the first paint and nothing
+ * moves when the real one takes over. It is the same component as the live studio, in its "shell"
+ * mode. The live studio removes this element in the frame it first appears (see
+ * ErrorBoundary.tsx).
+ *
+ * Use it beside the island, inside an element marked data-island-host.
+ */
+import { CANADA_PLACES } from '../data/definitions/canada-places';
+import citiesMeta from '../data/maps/canada-cities.meta.json';
+import canadaMeta from '../data/maps/canada.meta.json';
+import worldMeta from '../data/maps/world.meta.json';
+import { PosterStudio } from '../islands/poster/PosterStudio';
+import { MAPS } from '../lib/maps/registry';
+import type { MapGeoMeta, MapGeometry, MapId } from '../lib/maps/types';
+
+interface Props {
+  map: MapId;
+}
+
+const { map } = Astro.props;
+const meta = (map === 'world' ? worldMeta : map === 'canada' ? canadaMeta : citiesMeta) as unknown as MapGeoMeta;
+// The shell shows no poster yet, so no geometry is loaded for it.
+const geometry: MapGeometry = { id: map, lod: 'preview', width: meta.width, height: meta.height, shapes: {} };
+---
+
+<div data-placeholder>
+  <PosterStudio def={MAPS[map]} meta={meta} geometry={geometry} places={map === 'canada' ? CANADA_PLACES : undefined} shell />
+</div>

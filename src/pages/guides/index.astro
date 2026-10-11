@@ -1,0 +1,162 @@
+---
+import { getCollection } from 'astro:content';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import MiniMap from '../../components/MiniMap.astro';
+import SamplePoster from '../../components/SamplePoster.astro';
+import Base from '../../layouts/Base.astro';
+
+const guides = (await getCollection('guides')).sort((a, b) => a.data.order - b.data.order);
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Travel inspiration', path: '/guides/' },
+];
+
+/**
+ * Three shelves. Each has one picture, however many guides it holds, so the page stays light as
+ * guides are added: a map drawn once costs the same for two guides or twenty.
+ */
+const shelves = [
+  {
+    id: 'world',
+    title: 'The world, and how to count it',
+    intro: 'How many countries there are, what counts as one, what counts as a visit, and a list to tick off.',
+  },
+  {
+    id: 'canada',
+    title: 'Canada, province by province',
+    intro: 'The 13 provinces and territories, the national parks, the World Heritage Sites and the largest cities.',
+  },
+  {
+    id: 'making',
+    title: 'Making your map and printing it',
+    intro: 'Which kind of travel map to make, and how to get a sharp print of it.',
+  },
+] as const;
+---
+
+<Base
+  title="Travel Inspiration and Map Guides | WorldTripMap"
+  description="Practical guides for people who keep track of where they have been: counting countries, checklists to print, Canada’s parks and cities, and printing a travel map."
+  image="/og/guides.png"
+  crumbs={crumbs}
+>
+  <section class="section--tight">
+    <div class="wrap">
+      <Breadcrumbs crumbs={crumbs} />
+      <div class="section-head guides__head">
+        <h1>Travel inspiration, and how to map it</h1>
+        <p class="lede">
+          Guides for people who keep count of where they have been. Each one answers its question in the first paragraph, is checked
+          against the sources it lists, and leads to a map you can fill in.
+        </p>
+      </div>
+
+      {
+        shelves.map((shelf) => {
+          const onShelf = guides.filter((guide) => guide.data.topic === shelf.id);
+          return (
+            <section class="shelf" aria-labelledby={`shelf-${shelf.id}`}>
+              <div class="shelf__picture" aria-hidden="true">
+                {shelf.id === 'world' && <MiniMap map="world" lit={['CAN', 'USA', 'BRA', 'FRA', 'ESP', 'IND', 'AUS', 'ZAF', 'JPN', 'EGY']} />}
+                {shelf.id === 'canada' && <MiniMap map="canada" lit={['CA-BC', 'CA-AB', 'CA-ON', 'CA-QC', 'CA-NS', 'CA-YT']} />}
+                {shelf.id === 'making' && <SamplePoster id="canada-nordic-explorer" sizes="15rem" caption={false} />}
+              </div>
+              <div class="shelf__text">
+                <h2 id={`shelf-${shelf.id}`}>{shelf.title}</h2>
+                <p class="shelf__intro">{shelf.intro}</p>
+                <ul class="guides">
+                  {onShelf.map((guide) => (
+                    <li class="guide">
+                      <h3>
+                        <a href={`/guides/${guide.id}/`}>{guide.data.title}</a>
+                      </h3>
+                      <p>{guide.data.deck}</p>
+                      <p class="guide__meta">{guide.data.minutes} minute read</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          );
+        })
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  .guides__head {
+    margin-top: 1.25rem;
+  }
+  .shelf {
+    display: grid;
+    gap: 1.25rem 2.5rem;
+    padding-block: 2.25rem;
+    border-top: 1px solid var(--line-strong);
+    align-items: start;
+  }
+  .shelf:last-child {
+    border-bottom: 1px solid var(--line-strong);
+  }
+  @media (min-width: 52rem) {
+    .shelf {
+      grid-template-columns: 15rem minmax(0, 1fr);
+    }
+    /* The picture stays beside its shelf while the guides scroll past. */
+    .shelf__picture {
+      position: sticky;
+      top: 5.5rem;
+    }
+  }
+  .shelf__picture {
+    max-width: 15rem;
+    padding: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-paper);
+    background: var(--white);
+  }
+  .shelf__text {
+    display: grid;
+    gap: 0.5rem;
+    max-width: 44rem;
+  }
+  .shelf h2 {
+    font-size: var(--text-2xl);
+    line-height: 1.2;
+  }
+  .shelf__intro {
+    color: var(--ink-2);
+  }
+  .guides {
+    display: grid;
+    margin-top: 0.75rem;
+    list-style: none;
+  }
+  .guide {
+    display: grid;
+    gap: 0.4rem;
+    padding-block: 1.15rem;
+    border-top: 1px solid var(--line);
+  }
+  .guide h3 {
+    font-family: var(--font-serif);
+    font-size: var(--text-xl);
+    font-weight: 400;
+    line-height: 1.25;
+  }
+  .guide h3 a {
+    text-decoration: none;
+  }
+  .guide h3 a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-500);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.18em;
+  }
+  .guide p {
+    color: var(--ink-2);
+  }
+  .guide__meta {
+    font-size: var(--text-sm);
+  }
+</style>

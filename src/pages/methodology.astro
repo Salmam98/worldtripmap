@@ -1,0 +1,225 @@
+---
+import { CANADA_REGIONS } from '../data/definitions/canada';
+import { CANADA_PLACES } from '../data/definitions/canada-places';
+import Page from '../layouts/Page.astro';
+import { MAPS, MAP_IDS, mapPath } from '../lib/maps/registry';
+import { computeAchievements } from '../lib/maps/achievements';
+import { placesIn } from '../lib/maps/places';
+import { emptySelection } from '../lib/maps/store';
+import { capitalize } from '../lib/text';
+
+const places = CANADA_PLACES;
+const kinds = places.kinds.map((kind) => ({ ...kind, count: places.places.filter((p) => p.kind === kind.id).length }));
+const perProvince = CANADA_REGIONS.map((region) => ({ name: region.name, count: placesIn(places, region.id).length }));
+const ontario = perProvince.find((row) => row.name === 'Ontario')!.count;
+---
+
+<Page
+  title="Data and Methods: How WorldTripMap Counts Places"
+  description="The counting rules, data sources, licences and map projections behind WorldTripMap: 195 countries, Canada’s 13 provinces and territories, and 45 Canadian cities."
+  h1="Data and methods"
+  lede="What each map counts, where its shapes come from, and how the numbers on your screen are worked out. If something here is wrong, we want to know."
+  crumb="Data and methods"
+  path="/methodology/"
+>
+  <h2>The one rule behind every number</h2>
+  <p>
+    A count is the number of places you have marked as explored. A percentage is that count divided by the number of countable places on
+    the map. A place is either marked or not, so it can never be counted twice, and marking a large place adds exactly as much as marking
+    a small one.
+  </p>
+  <p>Percentages are shown as whole numbers, with two exceptions that keep them honest: anything above zero but under 1% is shown as “&lt;1%”, and 100% appears only when every place is marked.</p>
+  <p>
+    No percentage on this site measures land area or population. Where we show an area figure (on the Canada map), it is on its own
+    line and labelled as the size of the places you marked. How much of a province you have seen is measured a different way, by the
+    places you tick inside it, and is explained <a href="#places">below</a>.
+  </p>
+
+  <h2>World: countries</h2>
+  <ul>
+    <li><strong>Counted: 195.</strong> The 193 member states of the United Nations, plus the Holy See and the State of Palestine, which the UN lists as non-member states with permanent observer status.</li>
+    <li><strong>Also on the map: 42 territories and other areas</strong> that have their own international (ISO 3166-1) code but are not UN members or observers, for example Greenland, Hong Kong, Puerto Rico, Taiwan and Kosovo. You can mark them. They are totalled separately and never added to the 195.</li>
+    <li><strong>Merged:</strong> areas in the dataset with no international code are drawn as part of the UN member state they belong to for UN purposes. Somaliland is part of Somalia’s entry and Northern Cyprus part of Cyprus’s.</li>
+    <li><strong>Overseas parts of a country</strong> that are not separate in the dataset, such as Hawaii, French Guiana and the Canary Islands, belong to their country’s single entry.</li>
+    <li><strong>Continents</strong> follow the United Nations M49 regions, with the Americas split into North America (including Central America and the Caribbean) and South America. This places Russia in Europe, and Türkiye, Cyprus, Georgia, Armenia and Azerbaijan in Asia.</li>
+  </ul>
+  <h3>Borders</h3>
+  <p>
+    Boundaries come from Natural Earth, which draws most disputed areas according to who controls them on the ground. Because this site
+    counts countries on the United Nations’ basis, we make one change so the map agrees with the count: Crimea is drawn as part of
+    Ukraine, in line with UN General Assembly resolution 68/262. Other disputed lines are left as Natural Earth draws them. A small
+    area with no agreed owner, the Siachen Glacier, is drawn as land that cannot be selected.
+  </p>
+  <p>Drawing a boundary on this map is a practical choice, not a statement about any territorial claim.</p>
+
+  <h2>Canada: provinces and territories</h2>
+  <ul>
+    <li><strong>Counted: 13.</strong> Ten provinces and three territories, each one place.</li>
+    <li><strong>Regions</strong> are the five in the Government of Canada’s <em>Discover Canada</em> guide: Atlantic Provinces, Central Canada, Prairie Provinces, West Coast and the North.</li>
+    <li><strong>Area figure:</strong> the total area (land and fresh water) of the provinces and territories you have marked, as a share of Canada’s 9,984,670 km², using Natural Resources Canada’s figures. It is the size of those places, not a measure of what you have seen.</li>
+  </ul>
+
+  <h2>Canada: major cities</h2>
+  <ul>
+    <li><strong>Counted: 45.</strong> All 41 census metropolitan areas in Statistics Canada’s 2021 Census, plus the four capitals that are not metropolitan areas: Charlottetown, Whitehorse, Yellowknife and Iqaluit.</li>
+    <li>A census metropolitan area includes the communities around its core city, and some carry paired names, such as Ottawa–Gatineau.</li>
+    <li>City locations come from Natural Earth. Three cities missing from that dataset (St. Catharines, Guelph and Brantford) are placed by hand at their city centres.</li>
+  </ul>
+
+  <h2 id="places">Canada: places inside each province and territory</h2>
+  <p>
+    Marking Ontario says you have been there. It does not say how much of it you have seen. For that, the Canada map lets you open any
+    province or territory and tick the places you have been to. There are <strong>{places.places.length} places</strong> on the list, of
+    four kinds:
+  </p>
+  <ul>
+    {
+      kinds.map((kind) => (
+        <li>
+          <strong>
+            {capitalize(kind.name.many)}: {kind.count}.
+          </strong>{' '}
+          {kind.rule}
+        </li>
+      ))
+    }
+  </ul>
+  <p>
+    <strong>A province’s percentage</strong> is the number of its listed places you have ticked, divided by the number listed for it.
+    Ontario has {ontario} places on the list, so someone who has only been to Toronto has ticked 1 of {ontario}, which is 3%.
+  </p>
+  <p>
+    <strong>The percentage for Canada</strong> is every ticked place divided by all {places.places.length}. Each place counts the same
+    wherever it is, so a province with more listed places weighs more than one with fewer.
+  </p>
+  <p>
+    <strong>On a poster</strong> the percentage for Canada becomes the large figure once you have ticked a place, with the number of
+    places and of provinces and territories underneath, and each province’s percentage beside its name. One switch in the poster studio
+    turns all of that off and brings back the plain count.
+  </p>
+  <p>
+    <strong>Colour.</strong> Once a place is ticked, each marked province is shaded by its own percentage, on the map and on the poster:
+    the lightest tone for none of its places, the full colour for all of them. The steps are not even. They are larger at the low end, so
+    that the first few places show: a province at 25% is drawn about halfway between the lightest tone and the full colour. The colour
+    is a guide to more and less; the exact figure is the percentage written in the list. Until a place is ticked anywhere, every marked
+    province has the same colour, and the poster studio has a switch to keep it that way.
+  </p>
+  <p>What these percentages are not:</p>
+  <ul>
+    <li>They are not a share of land area. Ticking a city and ticking a vast northern park each add one place.</li>
+    <li>
+      They are not a complete inventory. The list is a selection, and every province and territory has far more to see than is on it.
+      Reaching 100% means you have been to every place we list, nothing more.
+    </li>
+    <li>
+      The “well-known places” are our own choice, not an official list or a ranking. If something important is missing,
+      <a href="/contact/">tell us</a>.
+    </li>
+  </ul>
+  <p>
+    Each place is counted in exactly one province or territory. A place that lies in two, such as Wood Buffalo National Park or the
+    Confederation Bridge, is listed where most of it is or where most visitors reach it, and its entry names the other. A national park
+    that is also a World Heritage Site is listed once, as a park, with a note.
+  </p>
+  <div class="table-scroll" role="region" aria-label="Places listed in each province and territory" tabindex="0">
+    <table class="facts">
+      <thead>
+        <tr>
+          <th scope="col">Province or territory</th>
+          <th scope="col" class="r">Places listed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          perProvince.map((row) => (
+            <tr>
+              <th scope="row">{row.name}</th>
+              <td class="r num">{row.count}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Maps stay separate</h2>
+  <p>
+    Country, region and city progress are never merged automatically. Marking a province does not mark its cities or tick any place
+    inside it, and marking a city on the cities map does not mark its province. If you have marked Calgary on the cities map, the Canada
+    map can offer to add Alberta, and nothing changes unless you accept.
+  </p>
+  <p>
+    There is one place where a mark follows from another. When you open a province on the Canada map and tick a place inside it, that
+    province is marked as explored, because having been to Toronto means having been to Ontario. It never works the other way round.
+    The cities in that list are the same 45 as on the cities map, so a city ticked in one is ticked in the other.
+  </p>
+
+  <h2>Achievements</h2>
+  <p>Achievements are fixed rules applied to the places you have marked. These are all of them:</p>
+  {
+    MAP_IDS.map((id) => (
+      <>
+        <h3>{MAPS[id].name}</h3>
+        <ul>
+          {computeAchievements(MAPS[id], emptySelection()).map((a) => (
+            <li>
+              <strong>{a.name}.</strong> {a.rule}
+            </li>
+          ))}
+        </ul>
+      </>
+    ))
+  }
+
+  <h2>Projections</h2>
+  <ul>
+    <li><strong>World:</strong> Equal Earth, an equal-area projection, so countries keep their true relative sizes. It is centred on 11°E, which keeps the eastern tip of Russia attached to the rest of the country. The edge of the map then runs through the Bering Strait and the mid-Pacific, so a few island groups, such as Alaska’s western Aleutians and part of Kiribati, sit at the opposite edge from the rest of their country.</li>
+    <li><strong>Canada:</strong> Lambert conformal conic with standard parallels at 49°N and 77°N and a central meridian of 91°52′W, the projection used for national maps of Canada. Scale is true along the two standard parallels, which is where the scale bar on the Modern Cartographer poster is measured.</li>
+  </ul>
+
+  <h2>Sources and licences</h2>
+  {
+    MAP_IDS.map((id) => (
+      <>
+        <h3>
+          <a href={mapPath(MAPS[id])}>{MAPS[id].name}</a>
+        </h3>
+        <ul>
+          {MAPS[id].sources.map((source) => (
+            <li>
+              <a href={source.url} rel="noopener">
+                {source.name}
+              </a>
+              . {source.licence}. {source.note}
+            </li>
+          ))}
+        </ul>
+      </>
+    ))
+  }
+  <h3>Canada: places inside each province and territory</h3>
+  <ul>
+    {
+      places.sources.map((source) => (
+        <li>
+          <a href={source.url} rel="noopener">
+            {source.name}
+          </a>
+          . {source.licence}. {source.note}
+        </li>
+      ))
+    }
+  </ul>
+  <p>
+    Natural Earth data is in the public domain. The map shapes are simplified for screen and print with shared borders kept intact, and
+    the exact pipeline is part of the site’s source code. Typefaces on the site and posters are Manrope, DM Serif Display and Caveat, all
+    under the SIL Open Font License.
+  </p>
+  <p>Sources were last checked on 10 October 2026.</p>
+
+  <h2>Corrections</h2>
+  <p>
+    If a boundary, a name or a number looks wrong, <a href="/contact/">tell us</a> which map and what you expected. We check reports
+    against the sources above and fix what is wrong.
+  </p>
+</Page>

@@ -1,0 +1,74 @@
+---
+import Page from '../layouts/Page.astro';
+import { SITE } from '../lib/site';
+
+const updated = new Date(SITE.legalUpdated).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+---
+
+<Page
+  title="Terms of Use | WorldTripMap"
+  description="The terms for using WorldTripMap: what you can do with the posters you make, what the maps are and are not suitable for, and the limits of our responsibility."
+  h1="Terms of use"
+  lede="Plain terms for a simple tool. By using WorldTripMap you agree to them."
+  crumb="Terms"
+  path="/terms/"
+>
+  <p class="muted">Last updated {updated}.</p>
+
+  <h2>Using the site</h2>
+  <p>
+    WorldTripMap is free to use and does not require an account. You may use it for yourself, your family, your classroom or your
+    business. Please do not try to disrupt the site, overload it with automated requests, or use it to break the law.
+  </p>
+
+  <h2>What you make is yours</h2>
+  <p>
+    The maps and posters you create show your own travels and your own words, and you are free to download, print, share and display
+    them. You are responsible for the text you add: do not use a poster to mislead, harass or impersonate anyone.
+  </p>
+  <p>
+    The WorldTripMap name, logo, website design and code remain ours. Turning off the small site mark on a poster is allowed. Presenting
+    the tool itself as your own product is not.
+  </p>
+
+  <h2>What the maps are for</h2>
+  <p>
+    The maps are simplified drawings made for marking and displaying places you have been. They are not suitable for navigation, for
+    surveying, or as evidence of where a legal boundary lies. Boundaries and names follow the sources described on the{' '}
+    <a href="/methodology/">data and methods page</a> and do not express a position on any territorial dispute.
+  </p>
+  <p>
+    We work to keep facts on the site accurate and to correct mistakes when they are reported, but we cannot promise that everything is
+    complete or current. Check anything important against an official source.
+  </p>
+
+  <h2>Your data</h2>
+  <p>
+    Your maps are stored in your own browser and can be lost if you clear your browser’s data, switch devices, or use a private window.
+    Keep a share link or a downloaded poster if a map matters to you. The <a href="/privacy/">privacy page</a> explains this in full.
+  </p>
+
+  <h2>No warranty, and limits on liability</h2>
+  <p>
+    The site is provided as it is, without warranties of any kind. To the extent the law allows, we are not liable for losses that
+    result from using it, including a lost map, a print that did not turn out as expected, or a decision made using information found
+    here.
+  </p>
+
+  <h2>Third-party material</h2>
+  <p>
+    Map data comes from Natural Earth and is in the public domain. The typefaces are used under the SIL Open Font License. Links to
+    other websites are provided for reference, and we are not responsible for their content.
+  </p>
+
+  <h2>Changes</h2>
+  <p>
+    We may update the site and these terms. When the terms change in a way that matters, the date at the top will change. If you keep
+    using the site after a change, the new terms apply.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about these terms can be sent to <a href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>.
+  </p>
+</Page>

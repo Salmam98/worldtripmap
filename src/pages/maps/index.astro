@@ -1,0 +1,188 @@
+---
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import MiniMap from '../../components/MiniMap.astro';
+import { CATALOG, LEVELS } from '../../data/catalog';
+import Base from '../../layouts/Base.astro';
+import { MAPS, mapPath, posterPath } from '../../lib/maps/registry';
+
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Maps', path: '/maps/' },
+];
+const lit: Record<string, string[]> = {
+  world: ['CAN', 'USA', 'BRA', 'FRA', 'ESP', 'IND', 'AUS', 'ZAF', 'JPN', 'EGY', 'MEX'],
+  canada: ['CA-BC', 'CA-AB', 'CA-ON', 'CA-QC', 'CA-NS'],
+  'canada-cities': ['toronto', 'vancouver', 'montreal', 'halifax', 'calgary', 'winnipeg', 'quebec-city', 'st-johns'],
+};
+---
+
+<Base
+  title="Explore Interactive Travel Maps | WorldTripMap"
+  description="Choose a travel map to fill in: the world by country, Canada by province and territory, or 45 Canadian cities. More countries are on the way."
+  crumbs={crumbs}
+>
+  <section class="section--tight">
+    <div class="wrap">
+      <Breadcrumbs crumbs={crumbs} />
+      <div class="section-head catalog__head">
+        <h1>Explore the maps</h1>
+        <p class="lede">
+          Pick a map and start marking. Each one keeps its own progress on your device, so you can fill in the world, a country and
+          its cities side by side.
+        </p>
+      </div>
+
+      {
+        LEVELS.map((level) => {
+          const entries = CATALOG.filter((entry) => entry.level === level.level);
+          return (
+            <section class="catalog__level" aria-labelledby={`level-${level.level}`}>
+              <div class="catalog__level-head">
+                <h2 id={`level-${level.level}`}>{level.name}</h2>
+                <p>{level.summary}</p>
+              </div>
+              <ul class="catalog__list">
+                {entries.map((entry) =>
+                  entry.map ? (
+                    <li class="catalog__item">
+                      <a class="catalog__map" href={mapPath(MAPS[entry.map])} tabindex="-1" aria-hidden="true">
+                        <MiniMap map={entry.map} lit={lit[entry.map]} />
+                      </a>
+                      <div class="catalog__text">
+                        <h3>{entry.title}</h3>
+                        <p>{entry.detail}</p>
+                        <div class="catalog__actions">
+                          <a class="btn btn--sm" href={mapPath(MAPS[entry.map])}>
+                            Open the {entry.title === 'World' ? 'world' : entry.title} map
+                          </a>
+                          <a class="btn btn--sm btn--quiet" href={posterPath(MAPS[entry.map])}>
+                            Make a poster
+                          </a>
+                        </div>
+                      </div>
+                    </li>
+                  ) : (
+                    <li class="catalog__item catalog__item--soon">
+                      <div class="catalog__text">
+                        <h3>
+                          {entry.title} <span class="tag tag--soon">Coming soon</span>
+                        </h3>
+                        <p>{entry.detail}</p>
+                      </div>
+                    </li>
+                  ),
+                )}
+              </ul>
+            </section>
+          );
+        })
+      }
+
+      <p class="catalog__note">
+        Maps keep separate progress on purpose. Marking Alberta does not mark Calgary, and marking a city does not mark its province.
+        Where one of your maps implies a place on another, the page offers to add it and waits for you to say yes.{' '}
+        <a href="/methodology/">How counting works</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .catalog__head {
+    margin-top: 1.25rem;
+  }
+  .catalog__level {
+    display: grid;
+    gap: 1.5rem 3rem;
+    padding-block: 2.25rem;
+    border-top: 1px solid var(--line-strong);
+  }
+  @media (min-width: 56rem) {
+    .catalog__level {
+      grid-template-columns: 14rem minmax(0, 1fr);
+    }
+  }
+  .catalog__level-head h2 {
+    font-size: var(--text-3xl);
+  }
+  .catalog__level-head p {
+    margin-top: 0.4rem;
+    color: var(--ink-2);
+  }
+  .catalog__list {
+    display: grid;
+    gap: 1rem;
+    list-style: none;
+  }
+  .catalog__item {
+    display: grid;
+    gap: 1rem 2rem;
+    align-items: center;
+    padding: 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--white);
+    box-shadow: var(--shadow-1);
+  }
+  @media (min-width: 36rem) {
+    .catalog__item:not(.catalog__item--soon) {
+      grid-template-columns: 13rem minmax(0, 1fr);
+    }
+  }
+  .catalog__item--soon {
+    padding: 0.9rem 1.25rem;
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--line-strong);
+    box-shadow: none;
+  }
+  .catalog__map {
+    display: grid;
+    place-items: center;
+    max-height: 9rem;
+  }
+  .catalog__map :global(svg) {
+    max-height: 9rem;
+    width: auto;
+    max-width: 100%;
+  }
+  .catalog__text {
+    display: grid;
+    gap: 0.4rem;
+  }
+  .catalog__text h3 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-serif);
+    font-size: var(--text-2xl);
+    font-weight: 400;
+  }
+  .catalog__item--soon h3 {
+    font-family: var(--font-sans);
+    font-size: var(--text-md);
+    font-weight: 650;
+  }
+  .catalog__text p {
+    color: var(--ink-2);
+  }
+  .catalog__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+  }
+  .catalog__note {
+    max-width: 46rem;
+    margin-top: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line-strong);
+    font-size: 0.9375rem;
+    color: var(--ink-2);
+  }
+  .catalog__note a {
+    color: var(--ink);
+    font-weight: 600;
+  }
+</style>

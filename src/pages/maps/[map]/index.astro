@@ -1,0 +1,441 @@
+---
+import { getCollection } from 'astro:content';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import Faq from '../../../components/Faq.astro';
+import Icon from '../../../components/Icon.astro';
+import MapPlaceholder from '../../../components/MapPlaceholder.astro';
+import { CANADA_REGIONS, CANADA_GROUPS } from '../../../data/definitions/canada';
+import { CANADA_CITIES } from '../../../data/definitions/canada-cities';
+import { WORLD_GROUPS, WORLD_UNITS } from '../../../data/definitions/world';
+import { MAP_PAGES } from '../../../data/pages';
+import CanadaCitiesMap from '../../../islands/CanadaCitiesMap';
+import CanadaMap from '../../../islands/CanadaMap';
+import WorldMap from '../../../islands/WorldMap';
+import Base from '../../../layouts/Base.astro';
+import { MAPS, MAP_IDS, mapPath, posterPath } from '../../../lib/maps/registry';
+import type { MapId } from '../../../lib/maps/types';
+
+export function getStaticPaths() {
+  return MAP_IDS.map((id) => ({ params: { map: MAPS[id].slug }, props: { id } }));
+}
+
+const { id } = Astro.props as { id: MapId };
+const def = MAPS[id];
+const copy = MAP_PAGES[id];
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Maps', path: '/maps/' },
+  { name: copy.crumb, path: mapPath(def) },
+];
+const n = (v: number) => v.toLocaleString('en-CA');
+const others = MAP_IDS.filter((other) => other !== id);
+// The guides written for this map: the questions people ask before, or while, they fill it in.
+const guides = (await getCollection('guides')).filter((guide) => guide.data.map === id).sort((a, b) => a.data.order - b.data.order);
+
+const continents = WORLD_GROUPS.map((group) => ({
+  name: group.name,
+  countries: WORLD_UNITS.filter((u) => u.group === group.id && u.status !== 'territory').length,
+  territories: WORLD_UNITS.filter((u) => u.group === group.id && u.status === 'territory').length,
+}));
+const citiesByProvince = CANADA_REGIONS.map((region) => ({
+  region,
+  cities: CANADA_CITIES.filter((c) => c.province === region.id),
+})).filter((row) => row.cities.length);
+---
+
+<Base title={copy.title} description={copy.description} image={copy.image} imageAlt={`${def.name} on WorldTripMap`} crumbs={crumbs}>
+  <section class="map-page__top">
+    <div class="wrap">
+      <Breadcrumbs crumbs={crumbs} />
+      <div class="map-page__head">
+        <h1>{copy.h1}</h1>
+        <p class="lede">{copy.lede}</p>
+      </div>
+
+      {/* The stand-in holds the page's shape; the live map takes its place when it has loaded. */}
+      <div data-island-host>
+        <MapPlaceholder map={id} />
+        {id === 'canada' && <CanadaMap client:only="preact" />}
+        {id === 'world' && <WorldMap client:only="preact" />}
+        {id === 'canada-cities' && <CanadaCitiesMap client:only="preact" />}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper" aria-labelledby="about-map">
+    <div class="wrap map-notes">
+      <div class="map-notes__main">
+        <h2 id="about-map">{copy.about.heading}</h2>
+        <div class="prose">
+          {copy.about.body.map((paragraph) => <p set:html={paragraph} />)}
+          <p>
+            <a href="/methodology/">Data sources and methods</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="map-notes__side">
+        {
+          id === 'canada' && (
+            <>
+              <h2>The 13 provinces and territories</h2>
+              <div class="table-scroll" role="region" aria-label="Provinces and territories of Canada" tabindex="0">
+                <table class="facts">
+                  <thead>
+                    <tr>
+                      <th scope="col">Name</th>
+                      <th scope="col">Capital</th>
+                      <th scope="col" class="r">
+                        Area (km²)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {CANADA_GROUPS.map((group) => (
+                      <>
+                        <tr class="facts__group">
+                          <th colspan="3" scope="colgroup">
+                            {group.name}
+                          </th>
+                        </tr>
+                        {CANADA_REGIONS.filter((r) => r.group === group.id).map((r) => (
+                          <tr>
+                            <th scope="row">
+                              {r.name} <span class="facts__code">{r.postal}</span>
+                            </th>
+                            <td>{r.capital}</td>
+                            <td class="r num">{n(r.areaKm2)}</td>
+                          </tr>
+                        ))}
+                      </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p class="facts__source">
+                Areas: Natural Resources Canada, Atlas of Canada. Regions: Government of Canada, Discover Canada.{' '}
+                <a href="/guides/canada-provinces-and-territories/">Read the full guide</a>
+              </p>
+            </>
+          )
+        }
+        {
+          id === 'world' && (
+            <>
+              <h2>What is on the map</h2>
+              <div class="table-scroll" role="region" aria-label="Countries and territories by continent" tabindex="0">
+                <table class="facts">
+                  <thead>
+                    <tr>
+                      <th scope="col">Continent</th>
+                      <th scope="col" class="r">
+                        Countries
+                      </th>
+                      <th scope="col" class="r">
+                        Territories
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {continents.map((c) => (
+                      <tr>
+                        <th scope="row">{c.name}</th>
+                        <td class="r num">{c.countries || '–'}</td>
+                        <td class="r num">{c.territories || '–'}</td>
+                      </tr>
+                    ))}
+                    <tr class="facts__total">
+                      <th scope="row">Total</th>
+                      <td class="r num">{continents.reduce((a, c) => a + c.countries, 0)}</td>
+                      <td class="r num">{continents.reduce((a, c) => a + c.territories, 0)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="facts__source">
+                Continents follow the United Nations M49 regions, with the Americas split in two. Antarctica can be marked as a
+                territory. <a href="/guides/how-many-countries-are-there/">How many countries are there?</a>
+              </p>
+            </>
+          )
+        }
+        {
+          id === 'canada-cities' && (
+            <>
+              <h2>The 45 cities, by province and territory</h2>
+              <dl class="city-list">
+                {citiesByProvince.map((row) => (
+                  <div>
+                    <dt>{row.region.name}</dt>
+                    <dd>{row.cities.map((c) => c.name).join(', ')}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p class="facts__source">
+                Source for the list: Statistics Canada, 2021 Census (41 census metropolitan areas), plus four capitals.
+              </p>
+            </>
+          )
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="map-faq">
+    <div class="wrap map-faq">
+      <h2 id="map-faq">Questions about this map</h2>
+      <Faq items={copy.faq} />
+    </div>
+  </section>
+
+  {
+    guides.length > 0 && (
+      <section class="section--tight map-guides" aria-labelledby="map-guides">
+        <div class="wrap">
+          <h2 id="map-guides">Guides for this map</h2>
+          <ul class="map-guides__list">
+            {guides.map((guide) => (
+              <li>
+                <a href={`/guides/${guide.id}/`}>{guide.data.title}</a>
+                <span>{guide.data.minutes} minute read</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="section--tight map-next" aria-labelledby="map-next">
+    <div class="wrap">
+      <h2 id="map-next">Keep going</h2>
+      <ul class="map-next__list">
+        <li>
+          <a href={posterPath(def)}>
+            <Icon name="poster" size={22} />
+            <span>
+              <strong>Design a poster of this map</strong>
+              <span>Four designs, PNG or print-ready PDF</span>
+            </span>
+          </a>
+        </li>
+        {
+          others.map((other) => (
+            <li>
+              <a href={mapPath(MAPS[other])}>
+                <Icon name={MAPS[other].level === 'country' ? 'globe' : MAPS[other].level === 'city' ? 'city' : 'regions'} size={22} />
+                <span>
+                  <strong>{MAPS[other].name}</strong>
+                  <span>{MAPS[other].scope}</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .map-page__top {
+    padding-block: clamp(1.5rem, 4vw, 2.5rem) var(--section);
+  }
+  .map-page__head {
+    display: grid;
+    gap: 0.8rem;
+    margin: 1rem 0 clamp(1.5rem, 3vw, 2.25rem);
+    max-width: 46rem;
+  }
+  .map-page__head h1 {
+    font-size: var(--text-4xl);
+  }
+
+  .map-notes {
+    display: grid;
+    gap: 3rem;
+  }
+  @media (min-width: 60rem) {
+    .map-notes {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 5rem;
+    }
+  }
+  .map-notes h2 {
+    font-size: var(--text-2xl);
+    margin-bottom: 1.25rem;
+  }
+  .table-scroll {
+    overflow-x: auto;
+  }
+  .facts {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+  .facts th,
+  .facts td {
+    padding: 0.5rem 0.75rem 0.5rem 0;
+    text-align: left;
+    border-bottom: 1px solid var(--line-strong);
+    vertical-align: baseline;
+  }
+  .facts thead th {
+    font-size: var(--text-xs);
+    font-weight: 650;
+    color: var(--ink-2);
+    border-bottom-color: var(--navy-900);
+  }
+  .facts tbody th {
+    font-weight: 600;
+  }
+  .facts .r {
+    text-align: right;
+    padding-right: 0;
+  }
+  .facts__group th {
+    padding-top: 1rem;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--forest-600);
+    border-bottom: 0;
+  }
+  .facts__code {
+    margin-left: 0.3rem;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--ink-3);
+  }
+  .facts__total th,
+  .facts__total td {
+    font-weight: 700;
+    border-bottom: 0;
+    border-top: 1px solid var(--navy-900);
+  }
+  .facts__source {
+    margin-top: 1rem;
+    font-size: var(--text-sm);
+    color: var(--ink-2);
+  }
+  .facts__source a {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .city-list {
+    display: grid;
+    margin: 0;
+    border-top: 1px solid var(--line-strong);
+    font-size: 0.9375rem;
+  }
+  .city-list div {
+    display: grid;
+    gap: 0.15rem 1.5rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  @media (min-width: 30rem) {
+    .city-list div {
+      grid-template-columns: 11rem minmax(0, 1fr);
+    }
+  }
+  .city-list dt {
+    font-weight: 650;
+  }
+  .city-list dd {
+    margin: 0;
+    color: var(--ink-2);
+  }
+
+  .map-faq {
+    display: grid;
+    gap: 1.75rem;
+    max-width: 52rem;
+  }
+  .map-faq h2 {
+    font-size: var(--text-3xl);
+  }
+
+  .map-guides {
+    border-top: 1px solid var(--line);
+  }
+  .map-guides h2 {
+    font-size: var(--text-2xl);
+    margin-bottom: 0.75rem;
+  }
+  .map-guides__list {
+    display: grid;
+    list-style: none;
+    column-gap: 3rem;
+  }
+  @media (min-width: 48rem) {
+    .map-guides__list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .map-guides__list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    padding-block: 0.8rem;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .map-guides__list a {
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+    text-underline-offset: 0.16em;
+  }
+  .map-guides__list span {
+    font-size: var(--text-sm);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .map-next {
+    border-top: 1px solid var(--line);
+  }
+  .map-next h2 {
+    font-size: var(--text-2xl);
+    margin-bottom: 1.25rem;
+  }
+  .map-next__list {
+    display: grid;
+    gap: 0.75rem;
+    list-style: none;
+  }
+  @media (min-width: 48rem) {
+    .map-next__list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .map-next__list a {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    height: 100%;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-control);
+    background: var(--white);
+    text-decoration: none;
+    transition: border-color 0.15s var(--ease);
+  }
+  .map-next__list a:hover {
+    border-color: var(--navy-900);
+  }
+  .map-next__list svg {
+    flex: none;
+    color: var(--forest-600);
+  }
+  .map-next__list a > span {
+    display: grid;
+    gap: 0.1rem;
+  }
+  .map-next__list a > span > span {
+    font-size: var(--text-sm);
+    color: var(--ink-2);
+  }
+</style>

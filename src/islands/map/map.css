@@ -1,0 +1,320 @@
+/* The interactive map. Colours come from the --map-* tokens in tokens.css. */
+
+.map {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-paper);
+  background: var(--map-water);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+.map.is-over-place {
+  cursor: pointer;
+}
+.map.is-panning {
+  cursor: grabbing;
+}
+
+.map__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.map__svg:focus {
+  outline: none;
+}
+
+.map__sphere {
+  fill: var(--map-water);
+  stroke: var(--line-strong);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+.map__graticule {
+  fill: none;
+  stroke: #ece8dd;
+  stroke-width: 0.75px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.map__shape {
+  fill: var(--map-land);
+  stroke: var(--map-border);
+  stroke-width: 0.9px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: fill 0.2s var(--ease);
+  outline: none;
+}
+.map__shape--inert {
+  fill: var(--map-inert);
+  stroke: var(--white);
+  stroke-width: 1.2px;
+  pointer-events: none;
+}
+.map--interactive .map__shape[data-id]:hover {
+  fill: var(--map-land-hover);
+}
+/*
+ * A visited place is one colour, unless the map hands it a tone of its own (--tone): on the Canada
+ * map a province gets deeper the more of its places are ticked. See tones.ts.
+ */
+.map__shape.is-visited,
+.map__shape.is-both {
+  fill: var(--tone, var(--map-visited));
+}
+.map--interactive .map__shape.is-visited:hover {
+  fill: var(--tone-hover, var(--map-visited-hover));
+}
+.map__shape.is-you {
+  fill: var(--map-you);
+}
+
+/* Drawn underneath the land: only the outer half of this heavier line is visible, as a coastline. */
+.map__coast {
+  fill: var(--map-land);
+  stroke: var(--map-coast);
+  stroke-width: 2.3px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.map__lake {
+  fill: var(--map-water);
+  stroke: var(--map-coast);
+  stroke-width: 0.6px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.map__wish-bg {
+  fill: var(--map-wish-bg);
+}
+.map__wish-line {
+  fill: var(--map-wish-line);
+}
+.map__friend-bg {
+  fill: var(--map-friend);
+}
+.map__friend-line {
+  fill: var(--navy-900);
+  opacity: 0.55;
+}
+
+.map__labels {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+.map__label {
+  fill: var(--slate-700);
+}
+.map__label.is-visited,
+.map__label.is-both {
+  fill: var(--tone-label, var(--ivory-50));
+}
+
+.map__marker {
+  fill: var(--white);
+  stroke: var(--slate-600);
+  stroke-width: 1.1px;
+  vector-effect: non-scaling-stroke;
+  transition: fill 0.2s var(--ease);
+  outline: none;
+}
+.map__marker.is-visited,
+.map__marker.is-both {
+  fill: var(--tone, var(--map-visited));
+  stroke: var(--white);
+  stroke-width: 1.4px;
+}
+.map__marker.is-wishlist,
+.map__marker.is-friend {
+  fill: var(--gold-500);
+  stroke: var(--navy-900);
+}
+.map__marker.is-you {
+  fill: var(--map-you);
+  stroke: var(--navy-900);
+}
+.map__marker--point {
+  stroke: var(--navy-900);
+  stroke-width: 1.5px;
+}
+.map__marker--point.is-visited,
+.map__marker--point.is-both {
+  stroke: var(--navy-900);
+  stroke-width: 1.5px;
+}
+
+.map__hot,
+.map__ring {
+  fill: none;
+  stroke: var(--navy-900);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.map__ring {
+  stroke-width: 3px;
+}
+.map__ring--halo {
+  stroke: var(--white);
+  stroke-width: 7px;
+}
+.map__hot-point,
+.map__ring-point {
+  fill: none;
+  stroke: var(--navy-900);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.map__ring-point {
+  stroke-width: 3px;
+}
+
+.map__tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: grid;
+  gap: 0.05rem;
+  max-width: 15rem;
+  padding: 0.4rem 0.65rem 0.45rem;
+  border-radius: 6px;
+  background: var(--navy-900);
+  color: var(--ivory-50);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  pointer-events: none;
+  box-shadow: var(--shadow-2);
+  will-change: transform;
+}
+.map__tooltip[hidden] {
+  display: none;
+}
+.map__tooltip strong {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+.map__tooltip span {
+  color: var(--slate-on-navy);
+}
+
+/*
+ * The stand-in drawn when the site is built (ShellMap in frame.tsx): the land as one shape, with
+ * the coastline the live map gets from its separate coast layer, and the loading message over
+ * the foot of the picture.
+ */
+.map__shell-land {
+  fill: var(--map-land);
+  stroke: var(--map-coast);
+  stroke-width: 2.3px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  paint-order: stroke;
+}
+.map__shell-land--backdrop {
+  fill: var(--map-inert);
+}
+.map__status {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(90%, 26rem);
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill);
+  background: var(--navy-900);
+  color: var(--ivory-50);
+  font-size: var(--text-sm);
+  text-align: center;
+  --focus: var(--gold-500);
+}
+
+.map-frame {
+  position: relative;
+  width: 100%;
+}
+.map__bar {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  z-index: 2;
+}
+.map__hint {
+  display: none;
+}
+.map__zoom {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--white);
+  box-shadow: var(--shadow-1);
+}
+.map__zoom-btn {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--navy-900);
+}
+.map__zoom-btn + .map__zoom-btn {
+  border-top: 1px solid var(--line);
+}
+.map__zoom-btn:hover:not(:disabled) {
+  background: var(--ivory-100);
+}
+.map__zoom-btn:disabled {
+  color: #9aa2ad;
+  cursor: default;
+}
+.map__zoom-btn:focus-visible {
+  outline-offset: -2px;
+}
+/* On small screens the buttons would hide whole countries, so they move into a row under the map. */
+@media (max-width: 47.99rem) {
+  .map__bar {
+    position: static;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.4rem;
+  }
+  .map__hint {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--ink-2);
+  }
+  .map__zoom {
+    display: flex;
+    flex: none;
+    box-shadow: none;
+  }
+  .map__zoom-btn {
+    width: 2.75rem;
+    height: 2.5rem;
+  }
+  .map__zoom-btn + .map__zoom-btn {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+}

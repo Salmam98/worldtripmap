@@ -1,0 +1,69 @@
+---
+/**
+ * A small, static picture of a map for cards and the home page chooser, drawn from the same
+ * generated geometry as the real maps (at its lightest level of detail).
+ */
+import canada from '../data/maps/canada.preview.json';
+import cities from '../data/maps/canada-cities.points.json';
+import world from '../data/maps/world.art.json';
+import type { MapId } from '../lib/maps/types';
+
+interface Props {
+  map: MapId;
+  /** Ids to draw as explored. */
+  lit?: string[];
+}
+
+const { map, lit = [] } = Astro.props;
+const on = new Set(lit);
+const width = map === 'world' ? world.width : canada.width;
+const height = map === 'world' ? world.height : canada.height;
+const shapes: [string, string][] = map === 'world' ? Object.entries(world.shapes) : Object.entries(canada.shapes);
+const plain = shapes.filter(([id]) => map === 'canada-cities' || !on.has(id)).map(([, d]) => d).join('') + (map === 'world' ? world.rest : '');
+const bright = map === 'canada-cities' ? '' : shapes.filter(([id]) => on.has(id)).map(([, d]) => d).join('');
+const dots = map === 'canada-cities' ? Object.entries(cities.points as Record<string, number[]>) : [];
+---
+
+<svg class="minimap" viewBox={`0 0 ${width} ${height}`} aria-hidden="true" focusable="false">
+  {map === 'world' && <path class="minimap__sphere" d={world.outline} />}
+  <path class="minimap__land" d={plain}></path>
+  {bright && <path class="minimap__lit" d={bright} />}
+  {dots.map(([id, [x, y]]) => <circle class:list={['minimap__dot', on.has(id) && 'is-lit']} cx={x} cy={y} r={on.has(id) ? 150 : 62} />)}
+</svg>
+
+<style>
+  .minimap {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .minimap__sphere {
+    fill: none;
+    stroke: var(--line-strong);
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+  }
+  .minimap__land {
+    fill: var(--map-land);
+    stroke: var(--white);
+    stroke-width: 0.75px;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .minimap__lit {
+    fill: var(--forest-600);
+    stroke: var(--white);
+    stroke-width: 0.75px;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .minimap__dot {
+    fill: #a39c88;
+  }
+  .minimap__dot.is-lit {
+    fill: var(--forest-600);
+    stroke: var(--white);
+    stroke-width: 1.5px;
+    vector-effect: non-scaling-stroke;
+  }
+</style>

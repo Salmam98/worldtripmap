@@ -1,0 +1,843 @@
+---
+import { getCollection } from 'astro:content';
+import Faq from '../components/Faq.astro';
+import Icon from '../components/Icon.astro';
+import MapFallback from '../components/MapFallback.astro';
+import MiniMap from '../components/MiniMap.astro';
+import SamplePoster from '../components/SamplePoster.astro';
+import { CATALOG, LEVELS } from '../data/catalog';
+import world from '../data/maps/world.art.json';
+import LazyCanadaMap from '../islands/LazyCanadaMap';
+import Base from '../layouts/Base.astro';
+import type { IconName } from '../lib/icons';
+import { MAPS, mapPath } from '../lib/maps/registry';
+import { siteLd } from '../lib/seo';
+
+// The hero map: a handful of countries "ink in" once, in this order, when the page loads.
+const INKED = ['CAN', 'USA', 'MEX', 'BRA', 'ARG', 'GBR', 'FRA', 'ESP', 'EGY', 'ZAF', 'IND', 'JPN', 'AUS'];
+const shapes = world.shapes as Record<string, string>;
+const inked = INKED.filter((id) => shapes[id]);
+const land = Object.entries(shapes).filter(([id]) => !inked.includes(id)).map(([, d]) => d).join('') + world.rest;
+
+const levelIcon: Record<string, IconName> = { country: 'globe', region: 'regions', city: 'city' };
+const levelLit: Record<string, string[]> = {
+  world: ['CAN', 'USA', 'BRA', 'FRA', 'ESP', 'IND', 'AUS', 'ZAF', 'JPN', 'EGY', 'MEX'],
+  canada: ['CA-BC', 'CA-AB', 'CA-ON', 'CA-QC', 'CA-NS'],
+  'canada-cities': ['toronto', 'vancouver', 'montreal', 'halifax', 'calgary', 'winnipeg', 'quebec-city', 'st-johns'],
+};
+
+const features: { icon: IconName; title: string; text: string; soon?: string[] }[] = [
+  {
+    icon: 'regions',
+    title: 'Interactive travel maps',
+    text: 'Real geographic boundaries you can tap, click or tick through. Every country, province and city is its own selectable place.',
+  },
+  {
+    icon: 'poster',
+    title: 'Personalized downloadable posters',
+    text: 'Four designs, your own title and colours, saved as a PNG for sharing or a vector PDF that prints sharp at any size.',
+  },
+  {
+    icon: 'sliders',
+    title: 'Travel progress and statistics',
+    text: 'A running count and percentage, a breakdown by continent or region, and achievements whose rules you can read and check. On the Canada map, tick the cities, parks and landmarks you saw in each province and every province gets its own percentage.',
+  },
+  {
+    icon: 'bookmark',
+    title: 'Travel bucket lists',
+    text: 'Mark the places you want to go as well as the places you have been. They show on your map in their own pattern.',
+  },
+  {
+    icon: 'flag',
+    title: 'Friend challenges and sharing',
+    text: 'Send a link, let a friend mark their own map, then compare the two side by side. Sharing is always your choice.',
+  },
+  {
+    icon: 'globe',
+    title: 'More country maps on the way',
+    text: 'The world, Canada and Canadian cities work today. These are next:',
+    soon: ['United States, 50 states', 'Bangladesh, 64 districts'],
+  },
+];
+
+const steps = [
+  { title: 'Choose your map', text: 'Start with the world, Canada’s provinces and territories, or Canadian cities.' },
+  { title: 'Select the places you’ve visited', text: 'Tap the map or tick the list. Your count updates as you go.' },
+  { title: 'Personalize your design', text: 'Pick a poster design, then add a title, your name, dates and a caption.' },
+  { title: 'Download and share', text: 'Save a PNG or a print-ready PDF, share a picture, or challenge a friend.' },
+];
+
+const faq = [
+  {
+    q: 'Is WorldTripMap free?',
+    a: '<p>Yes. Marking places, designing a poster and downloading it as a PNG or a PDF are all free, and there is no account to create.</p>',
+  },
+  {
+    q: 'Do I need an account, and where is my map kept?',
+    a: '<p>No account. Your map is saved in your own browser, on the device you are using. Nothing is uploaded to us, which also means your map does not follow you to another device by itself. To move it, open Share on the map and send yourself the link.</p>',
+  },
+  {
+    q: 'How is the percentage worked out?',
+    a: '<p>It is the number of places you have marked divided by the number on that map: 13 provinces and territories for Canada, 195 countries for the world. It is a count of places, not a share of land area. On the Canada map you can go one step further: tick the places you saw inside each province, and each province gets its own percentage, with one for the whole country. <a href="/methodology/">How we count</a>.</p>',
+  },
+  {
+    q: 'Which countries does the world map count?',
+    a: '<p>195: the 193 member states of the United Nations, plus the Holy See and Palestine, the two states with permanent observer status. You can also mark 42 territories and other areas, such as Greenland, Hong Kong and Puerto Rico. Those are counted on a separate line.</p>',
+  },
+  {
+    q: 'Can I print my map?',
+    a: '<p>Yes. Posters download as vector PDFs at 8 × 10 in, 18 × 24 in, 24 × 18 in and A3, and stay sharp at other sizes with the same proportions. There are PNG files up to 4,809 pixels on the long side as well. <a href="/guides/print-a-travel-map-poster/">How to print a travel map poster</a>.</p>',
+  },
+  {
+    q: 'How does challenging a friend work?',
+    a: '<p>Choose Challenge a friend on any map and send the link. Your friend sees how many places you have explored, marks their own map, and then compares the two side by side. The link itself carries your places. We never store them.</p>',
+  },
+  {
+    q: 'Does it work on a phone?',
+    a: '<p>Yes. Tap places on the map, pinch to zoom, or tick them in the list underneath, which is easier for small places. Posters can be designed and saved on a phone too.</p>',
+  },
+  {
+    q: 'Which maps are coming next?',
+    a: '<p>The United States by state and Bangladesh by district are planned, followed by more countries and cities. They are labelled “Coming soon” on the <a href="/maps/">maps page</a> until they work fully.</p>',
+  },
+];
+
+const allGuides = (await getCollection('guides')).sort((a, b) => a.data.order - b.data.order);
+// Two from each shelf of the guides page: the range, without the whole list.
+const guides = (['world', 'canada', 'making'] as const).flatMap((topic) => allGuides.filter((guide) => guide.data.topic === topic).slice(0, 2));
+const gallery = [
+  'canada-midnight-atlas',
+  'world-midnight-atlas',
+  'canada-modern-cartographer',
+  'canada-travel-journal',
+  'cities-modern-cartographer',
+  'world-nordic-explorer',
+];
+---
+
+<Base
+  title="WorldTripMap: Interactive Travel Map and Poster Maker"
+  description="Mark the countries, provinces and cities you have explored, track your progress, and turn your travels into a poster to print or share. Free, no account."
+  tone="navy"
+  jsonLd={siteLd(Astro.site)}
+>
+  <!-- A. Hero -->
+  <section class="hero section--navy">
+    <div class="wrap hero__inner">
+      <div class="hero__copy">
+        {/* The spaces are written out: each sentence sits on its own line, but read aloud or copied it is one phrase. */}
+        <h1>
+          <span>Your Travels.</span>{' '}
+          <span>Your World.</span>{' '}
+          <span>Your Map.</span>
+        </h1>
+        <p class="hero__lede">
+          Turn the places you’ve explored into a beautiful personalized travel map. Track your journey, celebrate your adventures,
+          and share your story.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--gold btn--lg" href="/maps/">Create My Travel Map</a>
+          <a class="btn btn--quiet btn--lg" href="#try">Explore the Map</a>
+        </div>
+        <p class="hero__note">Free to use. No account. Your map stays on your device.</p>
+      </div>
+      <div class="hero__poster">
+        <SamplePoster id="canada-nordic-explorer" sizes="(min-width: 64rem) 23rem, (min-width: 40rem) 20rem, 62vw" eager caption={false} />
+        <p class="hero__caption">An example poster, made here with sample data</p>
+      </div>
+    </div>
+    {/* Decoration comes after the words in the document, so the headline arrives first on a slow connection. */}
+    <svg class="hero__map" viewBox={`0 0 ${world.width} ${world.height}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <path class="hero__sphere" d={world.outline}></path>
+      <path class="hero__lines" d={world.graticule}></path>
+      <path class="hero__land" d={land}></path>
+      {inked.map((id, i) => <path class="hero__inked" style={`--i:${i}`} d={shapes[id]} />)}
+    </svg>
+  </section>
+
+  <!-- Choose between World, Regions and Cities -->
+  <section class="section" id="choose" aria-labelledby="choose-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="choose-title">Start with the map that fits your travels</h2>
+        <p class="lede">Three levels, each with its own progress. Fill in one, or keep all three.</p>
+      </div>
+      <div class="levels">
+        {
+          LEVELS.map((level) => {
+            const entries = CATALOG.filter((entry) => entry.level === level.level);
+            const live = entries.filter((entry) => entry.map);
+            const soon = entries.filter((entry) => !entry.map);
+            const first = live[0];
+            const def = first?.map ? MAPS[first.map] : undefined;
+            return (
+              <article class="level">
+                {def && (
+                  <a class="level__map" href={mapPath(def)} tabindex="-1" aria-hidden="true">
+                    <MiniMap map={def.id} lit={levelLit[def.id]} />
+                  </a>
+                )}
+                <h3>
+                  <Icon name={levelIcon[level.level]} size={22} />
+                  {level.name}
+                </h3>
+                <p>{level.summary}</p>
+                <ul class="level__list">
+                  {live.map((entry) => (
+                    <li>
+                      <a class="text-link" href={mapPath(MAPS[entry.map!])}>
+                        {entry.title}
+                      </a>
+                      <span>{entry.detail}</span>
+                    </li>
+                  ))}
+                  {soon.map((entry) => (
+                    <li class="is-soon">
+                      <span class="level__soon-name">
+                        {entry.title} <span class="tag tag--soon">Coming soon</span>
+                      </span>
+                      <span>{entry.detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            );
+          })
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- C. Interactive map experience -->
+  <section class="section section--paper" id="try" aria-labelledby="try-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="try-title">Try it now: where in Canada have you been?</h2>
+        <p class="lede">
+          This is the real map, not a picture of one. Tap a province or territory, or tick it in the list. Your marks are saved on
+          this device as you go.
+        </p>
+      </div>
+      <LazyCanadaMap client:only="preact">
+        <MapFallback slot="fallback" />
+        <MapFallback />
+      </LazyCanadaMap>
+    </div>
+  </section>
+
+  <!-- D. Features -->
+  <section class="section" aria-labelledby="features-title">
+    <div class="wrap features">
+      <div class="features__intro">
+        <h2 id="features-title">Everything you need to keep track, and nothing you have to sign up for</h2>
+        <p class="lede">WorldTripMap does a small number of things and does them properly.</p>
+        <a class="btn" href="/maps/">Create my map</a>
+      </div>
+      <dl class="features__list">
+        {
+          features.map((feature) => (
+            <div class="feature">
+              <dt>
+                <span class="feature__icon">
+                  <Icon name={feature.icon} size={22} />
+                </span>
+                {feature.title}
+              </dt>
+              <dd>
+                {feature.text}
+                {feature.soon && (
+                  <ul class="feature__soon">
+                    {feature.soon.map((item) => (
+                      <li>
+                        {item} <span class="tag tag--soon">Coming soon</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <!-- E. How it works -->
+  <section class="section section--navy how" aria-labelledby="how-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="how-title">How it works</h2>
+        <p class="lede">Four steps, a few minutes, no forms.</p>
+      </div>
+      <ol class="how__steps">
+        {
+          steps.map((step, i) => (
+            <li>
+              <span class="how__stop" aria-hidden="true">
+                {i + 1}
+              </span>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="how__more">
+        <a class="text-link" href="/how-it-works/">Read how it works in detail</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- F. Example gallery -->
+  <section class="section" aria-labelledby="gallery-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="gallery-title">Posters made with WorldTripMap</h2>
+        <p class="lede">
+          Every poster below was drawn by the same studio you will use, from made-up travels. Yours will show your own places.
+        </p>
+      </div>
+      <div class="gallery" id="gallery" role="region" aria-label="Example posters" tabindex="0" data-scroller>
+        {
+          gallery.map((id) => (
+            <div class:list={['gallery__item', id.startsWith('world-midnight') || id.startsWith('cities') ? 'gallery__item--wide' : '']}>
+              <SamplePoster
+                id={id}
+                sizes={id.startsWith('world-midnight') || id.startsWith('cities') ? '(min-width: 64rem) 38rem, 92vw' : '(min-width: 64rem) 18rem, (min-width: 40rem) 44vw, 92vw'}
+              />
+            </div>
+          ))
+        }
+      </div>
+      <p class="gallery__more">
+        <a class="btn btn--quiet" href="/travel-map-poster/">See the four poster designs</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- G. Travel inspiration -->
+  <section class="section section--paper" aria-labelledby="inspiration-title">
+    <div class="wrap inspiration">
+      <div class="section-head">
+        <h2 id="inspiration-title">Travel inspiration</h2>
+        <p class="lede">Short, checked guides for people who keep count of where they have been.</p>
+      </div>
+      <ul class="inspiration__list">
+        {
+          guides.map((guide) => (
+            <li>
+              <a href={`/guides/${guide.id}/`}>
+                <h3>{guide.data.title}</h3>
+                <p>{guide.data.deck}</p>
+                <span class="inspiration__meta">{guide.data.minutes} minute read</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="inspiration__more">
+        <a class="btn btn--quiet" href="/guides/">See all {allGuides.length} guides</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- G. FAQ -->
+  <section class="section" aria-labelledby="faq-title">
+    <div class="wrap faq-section">
+      <div class="section-head">
+        <h2 id="faq-title">Questions people ask</h2>
+        <p class="lede">
+          Something else? <a class="text-link" href="/contact/">Get in touch</a>.
+        </p>
+      </div>
+      <Faq items={faq} />
+    </div>
+  </section>
+
+  <section class="section--navy closing" aria-labelledby="closing-title">
+    <div class="wrap closing__inner">
+      <h2 id="closing-title">Where have you been so far?</h2>
+      <a class="btn btn--gold btn--lg" href="/maps/">Create My Travel Map</a>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { track } from '../lib/analytics';
+  track('homepage_viewed');
+</script>
+
+<style>
+  /* ---------------------------------------------------------------- hero */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(3rem, 7vw, 6rem) clamp(3.5rem, 8vw, 6.5rem);
+  }
+  .hero__map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.9;
+    pointer-events: none;
+  }
+  .hero__sphere {
+    fill: #132036;
+    stroke: #26385a;
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+  }
+  .hero__lines {
+    fill: none;
+    stroke: #1b2a47;
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+  }
+  .hero__land {
+    fill: #1e2e4b;
+    stroke: var(--navy-900);
+    stroke-width: 0.75px;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .hero__inked {
+    fill: var(--gold-500);
+    stroke: var(--navy-900);
+    stroke-width: 0.75px;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    opacity: 0.46;
+    animation: ink 0.7s var(--ease) both;
+    animation-delay: calc(0.35s + var(--i) * 0.14s);
+  }
+  @keyframes ink {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0.46;
+    }
+  }
+  /* A scrim behind the words, so the map never competes with the headline. */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgb(16 27 45 / 0.94) 0%, rgb(16 27 45 / 0.86) 34%, rgb(16 27 45 / 0) 62%);
+    pointer-events: none;
+  }
+  @media (max-width: 63.99rem) {
+    .hero::after {
+      background: rgb(16 27 45 / 0.8);
+    }
+  }
+  .hero__inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 3rem;
+    align-items: center;
+  }
+  .hero__copy {
+    display: grid;
+    gap: 1.5rem;
+    justify-items: start;
+  }
+  .hero h1 {
+    font-size: var(--text-5xl);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+  }
+  .hero h1 span {
+    display: block;
+  }
+  .hero__lede {
+    max-width: 33rem;
+    font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.25rem);
+    line-height: 1.55;
+    color: #c9d0da;
+  }
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .hero__note {
+    font-size: var(--text-sm);
+    color: var(--slate-on-navy);
+  }
+  .hero__poster {
+    display: grid;
+    gap: 0.9rem;
+    justify-items: center;
+    width: min(62vw, 20rem);
+    margin-inline: auto;
+  }
+  .hero__poster :global(.sample) {
+    width: 100%;
+    transform: rotate(1.6deg);
+  }
+  .hero__poster :global(.sample__paper) {
+    box-shadow:
+      0 2px 3px rgb(0 0 0 / 0.3),
+      0 34px 70px -24px rgb(0 0 0 / 0.75);
+  }
+  .hero__caption {
+    font-size: var(--text-xs);
+    color: var(--slate-on-navy);
+    text-align: center;
+  }
+  @media (min-width: 64rem) {
+    .hero__inner {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      gap: 4rem;
+    }
+    .hero__poster {
+      width: 23rem;
+      margin-inline: 0;
+      justify-self: end;
+    }
+  }
+
+  /* -------------------------------------------------------------- levels */
+  .levels {
+    display: grid;
+    gap: 2.5rem;
+  }
+  @media (min-width: 56rem) {
+    .levels {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+    }
+    .level + .level {
+      padding-left: 2.25rem;
+      border-left: 1px solid var(--line-strong);
+    }
+    .level:not(:last-child) {
+      padding-right: 2.25rem;
+    }
+  }
+  .level {
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+  }
+  .level__map {
+    display: grid;
+    place-items: center;
+    height: 9.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .level__map :global(svg) {
+    max-height: 9.5rem;
+    width: auto;
+    max-width: 100%;
+    transition: transform 0.3s var(--ease);
+  }
+  .level__map:hover :global(svg) {
+    transform: scale(1.03);
+  }
+  .level h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-serif);
+    font-size: var(--text-2xl);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  .level h3 :global(svg) {
+    color: var(--forest-600);
+  }
+  .level > p {
+    color: var(--ink-2);
+  }
+  .level__list {
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 0.5rem;
+    list-style: none;
+  }
+  .level__list li {
+    display: grid;
+    gap: 0.1rem;
+    font-size: 0.9375rem;
+  }
+  .level__list li > span:last-child {
+    color: var(--ink-2);
+    font-size: var(--text-sm);
+  }
+  .level__list .is-soon {
+    color: var(--ink-2);
+  }
+  .level__soon-name {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+
+  /* ------------------------------------------------------------ features */
+  .features {
+    display: grid;
+    gap: 2.5rem;
+  }
+  .features__intro {
+    display: grid;
+    gap: 1.1rem;
+    justify-items: start;
+    align-content: start;
+  }
+  @media (min-width: 64rem) {
+    .features {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 5rem;
+    }
+    .features__intro {
+      position: sticky;
+      top: 2rem;
+    }
+  }
+  .features__list {
+    margin: 0;
+    border-top: 1px solid var(--line-strong);
+  }
+  .feature {
+    display: grid;
+    gap: 0.4rem 1.5rem;
+    padding-block: 1.5rem;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  @media (min-width: 40rem) {
+    .feature {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      align-items: start;
+    }
+  }
+  .feature dt {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: var(--text-lg);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  .feature__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--forest-100);
+    color: var(--forest-600);
+  }
+  .feature dd {
+    margin: 0;
+    color: var(--ink-2);
+  }
+  .feature__soon {
+    display: grid;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    list-style: none;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+
+  /* ---------------------------------------------------------------- how */
+  .how__steps {
+    position: relative;
+    display: grid;
+    gap: 2rem;
+    list-style: none;
+    counter-reset: none;
+  }
+  .how__steps li {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+    padding-left: 3.75rem;
+  }
+  .how__stop {
+    position: absolute;
+    left: 0;
+    top: -0.2rem;
+    display: grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border: 1.5px solid var(--gold-500);
+    border-radius: 50%;
+    background: var(--navy-900);
+    color: var(--gold-500);
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+  /* The steps sit on a dashed route, the way stops do on a map. */
+  .how__steps li:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 1.3rem;
+    top: 2.6rem;
+    bottom: -2rem;
+    border-left: 1.5px dashed rgb(198 166 107 / 0.55);
+  }
+  .how__steps h3 {
+    font-size: var(--text-lg);
+  }
+  .how__steps p {
+    color: var(--ink-2);
+  }
+  @media (min-width: 56rem) {
+    .how__steps {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 2.5rem;
+    }
+    .how__steps li {
+      padding-left: 0;
+      padding-top: 4rem;
+    }
+    .how__stop {
+      top: 0;
+    }
+    .how__steps li:not(:last-child)::before {
+      left: 2.6rem;
+      right: -2.5rem;
+      top: 1.3rem;
+      bottom: auto;
+      border-left: 0;
+      border-top: 1.5px dashed rgb(198 166 107 / 0.55);
+    }
+  }
+  .how__more {
+    margin-top: 2.5rem;
+  }
+
+  /* ------------------------------------------------------------ gallery */
+  .gallery {
+    display: grid;
+    gap: 2.5rem 2rem;
+    align-items: end;
+  }
+  /* On a phone the posters sit in one row you swipe through, with the next one peeking in at the edge. */
+  @media (max-width: 39.99rem) {
+    .gallery {
+      display: flex;
+      align-items: flex-end;
+      gap: 1rem;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 0.5rem var(--gutter) 1.5rem;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: var(--gutter);
+      -webkit-overflow-scrolling: touch;
+    }
+    .gallery__item {
+      flex: 0 0 78%;
+      scroll-snap-align: start;
+    }
+    .gallery__item--wide {
+      flex-basis: 90%;
+    }
+  }
+  @media (min-width: 40rem) {
+    .gallery {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .gallery__item--wide {
+      grid-column: span 2;
+    }
+  }
+  @media (min-width: 64rem) {
+    .gallery {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .gallery__more {
+    margin-top: clamp(1.5rem, 5vw, 3rem);
+  }
+
+  /* -------------------------------------------------------- inspiration */
+  .inspiration__list {
+    display: grid;
+    list-style: none;
+    border-top: 1px solid var(--line-strong);
+  }
+  @media (min-width: 48rem) {
+    .inspiration__list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 3rem;
+    }
+  }
+  .inspiration__list a {
+    display: grid;
+    gap: 0.5rem;
+    height: 100%;
+    padding-block: 1.6rem;
+    border-bottom: 1px solid var(--line-strong);
+    text-decoration: none;
+    align-content: start;
+  }
+  .inspiration__list h3 {
+    font-family: var(--font-serif);
+    font-size: var(--text-2xl);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+  .inspiration__list a:hover h3 {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-500);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.18em;
+  }
+  .inspiration__list p {
+    color: var(--ink-2);
+  }
+  .inspiration__meta {
+    font-size: var(--text-sm);
+    color: var(--ink-3);
+  }
+  .inspiration__more {
+    margin-top: 2rem;
+  }
+
+  /* ---------------------------------------------------------------- faq */
+  .faq-section {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 64rem) {
+    .faq-section {
+      grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+      gap: 5rem;
+      align-items: start;
+    }
+    .faq-section .section-head {
+      position: sticky;
+      top: 2rem;
+    }
+  }
+
+  .closing {
+    padding-block: clamp(3rem, 7vw, 5rem);
+    border-bottom: 1px solid rgb(248 246 240 / 0.12);
+  }
+  .closing__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem 3rem;
+  }
+  .closing h2 {
+    font-size: var(--text-4xl);
+  }
+</style>

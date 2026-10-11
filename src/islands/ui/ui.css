@@ -1,0 +1,172 @@
+/* Shared pieces used inside the interactive islands. */
+
+.dialog {
+  width: min(100% - 2rem, 30rem);
+  max-height: min(100dvh - 2rem, 46rem);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--white);
+  color: var(--navy-900);
+  box-shadow: var(--shadow-3);
+  overflow: hidden;
+}
+.dialog--wide {
+  width: min(100% - 2rem, 46rem);
+}
+.dialog::backdrop {
+  background: rgb(11 20 34 / 0.55);
+}
+.dialog[open] {
+  display: flex;
+  animation: dialog-in 0.18s var(--ease);
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.dialog__panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+.dialog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem 0.25rem;
+}
+.dialog__head h2 {
+  font-size: var(--text-2xl);
+}
+.dialog__close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-right: -0.5rem;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+}
+.dialog__close:hover {
+  background: var(--ivory-100);
+}
+.dialog__body {
+  display: grid;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem 1.25rem;
+  overflow-y: auto;
+}
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.toast-region {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 70;
+  display: flex;
+  justify-content: center;
+  padding-inline: 1rem;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 32rem;
+  padding: 0.7rem 0.9rem 0.7rem 1.1rem;
+  border-radius: var(--radius-control);
+  background: var(--navy-900);
+  color: var(--ivory-50);
+  font-size: 0.9375rem;
+  font-weight: 550;
+  box-shadow: var(--shadow-3);
+  pointer-events: auto;
+  animation: toast-in 0.2s var(--ease);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.toast__action {
+  flex: none;
+  min-height: 2.25rem;
+  padding: 0 0.7rem;
+  border: 1px solid rgb(248 246 240 / 0.3);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gold-300);
+  font-weight: 700;
+}
+.toast__action:hover {
+  border-color: var(--gold-300);
+}
+.toast__action:focus-visible {
+  outline-color: var(--gold-500);
+}
+
+/* Two or three options where exactly one is on. */
+.segmented {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--ivory-100);
+}
+.segmented__option {
+  position: relative;
+}
+.segmented__option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.segmented__option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0 0.8rem;
+  border-radius: 6px;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  white-space: nowrap;
+  color: var(--slate-700);
+  transition:
+    background-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+.segmented__option input:checked + span {
+  background: var(--white);
+  color: var(--navy-900);
+  box-shadow: var(--shadow-1);
+}
+.segmented__option input:focus-visible + span {
+  outline: 2px solid var(--navy-900);
+  outline-offset: 1px;
+}
+.segmented__swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  flex: none;
+}

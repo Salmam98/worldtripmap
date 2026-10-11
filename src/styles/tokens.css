@@ -1,0 +1,151 @@
+/*
+ * WorldTripMap design tokens.
+ * One source for colour, type, space and elevation. Components read these variables and nothing
+ * else, so the look of the whole site can be tuned here.
+ */
+
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('../assets/fonts/ui/manrope-var-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F,
+    U+20AC, U+2122, U+2190-2193, U+2212, U+2215, U+2713, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('../assets/fonts/ui/manrope-var-latinext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'DM Serif Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/ui/dmserifdisplay-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F,
+    U+20AC, U+2122, U+2190-2193, U+2212, U+2215, U+2713, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'DM Serif Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/ui/dmserifdisplay-400-latinext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+/*
+ * Fallback faces sized to match the web fonts (measured against Arial and Times New Roman), so
+ * text does not jump when the real fonts arrive.
+ */
+@font-face {
+  font-family: 'Manrope Fallback';
+  src: local('Arial'), local('Helvetica Neue'), local('Liberation Sans');
+  size-adjust: 100.6%;
+  ascent-override: 106%;
+  descent-override: 29.8%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'DM Serif Fallback';
+  src: local('Times New Roman'), local('Liberation Serif');
+  size-adjust: 111.4%;
+  ascent-override: 93%;
+  descent-override: 30.1%;
+  line-gap-override: 0%;
+}
+
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --navy-950: #0b1422;
+  --navy-900: #101b2d;
+  --navy-800: #18263d;
+  --navy-700: #22334f;
+  --navy-600: #33466a;
+  --ivory-50: #f8f6f0;
+  --ivory-100: #f1eee5;
+  --ivory-200: #e6e1d4;
+  --ivory-300: #d6cfbd;
+  --white: #ffffff;
+  --forest-700: #264a3d;
+  --forest-600: #315c4c;
+  --forest-200: #c9dbd2;
+  --forest-100: #e3ede8;
+  --gold-700: #7e6431;
+  --gold-600: #a98a4f;
+  --gold-500: #c6a66b;
+  --gold-300: #dcc79c;
+  --gold-100: #f3e8cf;
+  --slate-700: #3d4857;
+  --slate-600: #4f5b6b;
+  --slate-500: #5b6676;
+  --slate-on-navy: #a9b3c1;
+  --brick-600: #9b2c1f;
+
+  /* Roles */
+  --bg: var(--ivory-50);
+  --surface: var(--white);
+  --ink: var(--navy-900);
+  --ink-2: var(--slate-600);
+  --ink-3: var(--slate-500);
+  --line: var(--ivory-200);
+  --line-strong: var(--ivory-300);
+  --accent: var(--forest-600);
+  --accent-ink: var(--ivory-50);
+  --focus: var(--navy-900);
+
+  /* The map */
+  --map-water: var(--white);
+  --map-land: #e3ddce;
+  --map-land-hover: #d0c8b3;
+  --map-coast: #8c8571;
+  --map-border: var(--ivory-50);
+  --map-visited: var(--forest-600);
+  --map-visited-hover: var(--forest-700);
+  --map-wish-bg: var(--gold-100);
+  --map-wish-line: var(--gold-600);
+  --map-friend: var(--gold-500);
+  --map-you: #8fb5a3;
+  --map-inert: #e7e2d5;
+
+  /* Type */
+  --font-sans: 'Manrope', 'Manrope Fallback', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'DM Serif Display', 'DM Serif Fallback', Georgia, 'Times New Roman', serif;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.3125rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: clamp(1.75rem, 1.45rem + 1.4vw, 2.25rem);
+  --text-4xl: clamp(2.125rem, 1.6rem + 2.6vw, 3.25rem);
+  --text-5xl: clamp(2.625rem, 1.5rem + 5.2vw, 4.75rem);
+
+  /* Space */
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --section: clamp(4rem, 9vw, 7.5rem);
+  --measure: 66ch;
+
+  /* Shape: paper is crisp, controls are soft, chips are round. */
+  --radius-paper: 3px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-pill: 999px;
+
+  /* Elevation, tinted with the brand navy rather than neutral grey. */
+  --shadow-1: 0 1px 2px rgb(16 27 45 / 0.06);
+  --shadow-2: 0 1px 2px rgb(16 27 45 / 0.05), 0 10px 28px -14px rgb(16 27 45 / 0.22);
+  --shadow-3: 0 2px 4px rgb(16 27 45 / 0.06), 0 28px 60px -28px rgb(16 27 45 / 0.38);
+  --shadow-paper: 0 1px 1px rgb(16 27 45 / 0.1), 0 18px 40px -18px rgb(11 20 34 / 0.55);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}

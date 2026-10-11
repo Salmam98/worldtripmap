@@ -1,0 +1,59 @@
+---
+/**
+ * The outline of Canada shown on the home page until its map is scrolled near and loaded, and all
+ * there is without JavaScript. (The map pages use MapPlaceholder.astro, which stands in for the
+ * whole tool.)
+ */
+import canada from '../data/maps/canada.preview.json';
+import { LoadState } from '../islands/ui/LoadState';
+
+const d = Object.values(canada.shapes).join('');
+---
+
+<div class="map-fallback" style={`aspect-ratio:${canada.width}/${canada.height}`}>
+  <svg viewBox={`0 0 ${canada.width} ${canada.height}`} aria-hidden="true">
+    <path d={d}></path>
+  </svg>
+  <p class="map-fallback__status">
+    <LoadState wait="Loading the map…" nojs="The interactive map needs JavaScript. Turn it on in your browser to mark places." what="The map" />
+  </p>
+</div>
+
+<style>
+  .map-fallback {
+    position: relative;
+    width: 100%;
+    max-height: 70vh;
+    margin-inline: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-paper);
+    background: var(--white);
+    box-shadow: var(--shadow-2);
+  }
+  .map-fallback svg {
+    width: 100%;
+    height: 100%;
+    padding: clamp(0.4rem, 1.4vw, 0.9rem);
+  }
+  .map-fallback path {
+    fill: var(--map-land);
+    stroke: var(--map-land);
+    stroke-width: 20;
+    stroke-linejoin: round;
+  }
+  .map-fallback__status {
+    position: absolute;
+    left: 50%;
+    bottom: 1rem;
+    transform: translateX(-50%);
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--radius-pill);
+    background: var(--navy-900);
+    color: var(--ivory-50);
+    font-size: var(--text-sm);
+    width: max-content;
+    max-width: min(90%, 26rem);
+    text-align: center;
+    --focus: var(--gold-500);
+  }
+</style>

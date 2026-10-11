@@ -1,0 +1,59 @@
+---
+/**
+ * Analytics is off unless PUBLIC_ANALYTICS is set at build time.
+ *
+ *   plausible  cookieless; the script loads for everyone and no banner is shown.
+ *   ga4        loads only after the visitor chooses "Allow analytics" in the consent banner.
+ *
+ * Page URLs are reported without the part after "#", which is where shared maps keep their data.
+ */
+import { SITE } from '../lib/site';
+
+const plausible = SITE.analytics === 'plausible' && SITE.plausibleDomain;
+const ga4 = SITE.analytics === 'ga4' && SITE.ga4Id;
+---
+
+{
+  plausible && (
+    <>
+      <script defer data-domain={SITE.plausibleDomain} src={SITE.plausibleSrc} />
+      <script is:inline>
+        window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments); };
+      </script>
+    </>
+  )
+}
+
+{
+  ga4 && (
+    <>
+      <script is:inline define:vars={{ id: SITE.ga4Id }}>
+        (function () {
+          var KEY = 'wtm:v1:consent';
+          function load() {
+            if (window.__wtmGa) return;
+            window.__wtmGa = true;
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', id, { page_location: location.origin + location.pathname });
+            var s = document.createElement('script');
+            s.async = true;
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
+            document.head.appendChild(s);
+          }
+          var choice = null;
+          try { choice = localStorage.getItem(KEY); } catch (e) {}
+          if (choice === 'granted') load();
+          window.__wtmConsent = {
+            choice: choice,
+            set: function (value) {
+              try { localStorage.setItem(KEY, value); } catch (e) {}
+              if (value === 'granted') load();
+            },
+          };
+        })();
+      </script>
+    </>
+  )
+}

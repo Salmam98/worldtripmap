@@ -1,0 +1,89 @@
+---
+/**
+ * Questions and answers as native disclosure widgets: keyboard and screen-reader friendly with no
+ * script, and the answers stay in the page text for search engines.
+ */
+interface Props {
+  items: { q: string; a: string }[];
+  /** Heading level for the questions. */
+  level?: 'h3' | 'h4';
+}
+
+const { items, level: Heading = 'h3' } = Astro.props;
+---
+
+<div class="faq">
+  {
+    items.map((item) => (
+      <details class="faq__item">
+        <summary>
+          <Heading>{item.q}</Heading>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <path class="faq__v" d="M12 5v14" />
+            <path d="M5 12h14" />
+          </svg>
+        </summary>
+        <div class="faq__answer" set:html={item.a} />
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  .faq {
+    border-top: 1px solid var(--line-strong);
+  }
+  .faq__item {
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .faq__item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.1rem 0;
+    cursor: pointer;
+    list-style: none;
+  }
+  .faq__item summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq__item summary :is(h3, h4) {
+    font-family: var(--font-sans);
+    font-size: var(--text-lg);
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+  }
+  .faq__item summary svg {
+    flex: none;
+    color: var(--ink-2);
+  }
+  .faq__v {
+    transform-origin: center;
+    transition: transform 0.2s var(--ease);
+  }
+  .faq__item[open] .faq__v {
+    transform: scaleY(0);
+  }
+  .faq__item summary:hover :is(h3, h4) {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-500);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+  .faq__answer {
+    max-width: 44rem;
+    padding: 0 0 1.35rem;
+    color: var(--ink-2);
+    line-height: 1.65;
+  }
+  .faq__answer :global(p + p) {
+    margin-top: 0.75em;
+  }
+  .faq__answer :global(a) {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+</style>

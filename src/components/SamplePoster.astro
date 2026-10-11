@@ -1,0 +1,68 @@
+---
+/** An example poster from src/data/samples.ts, always shown with a "Sample data" label. */
+import { sample } from '../data/samples';
+
+interface Props {
+  id: string;
+  /** The sizes attribute: how wide the image is shown. */
+  sizes: string;
+  eager?: boolean;
+  caption?: boolean;
+}
+
+const { id, sizes, eager = false, caption = true } = Astro.props;
+const s = sample(id);
+const wide = s.width > s.height;
+const [small, large] = wide ? [800, 1440] : [540, 1080];
+---
+
+<figure class="sample">
+  <div class="sample__paper">
+    <img
+      src={`/samples/${s.id}-${small}.webp`}
+      srcset={`/samples/${s.id}-${small}.webp ${small}w, /samples/${s.id}-${large}.webp ${large}w`}
+      sizes={sizes}
+      width={s.width}
+      height={s.height}
+      alt={`Example travel poster: ${s.caption}. Sample data.`}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding={eager ? 'sync' : 'async'}
+      fetchpriority={eager ? 'high' : undefined}
+    />
+  </div>
+  {
+    caption && (
+      <figcaption>
+        <span class="tag tag--sample">Sample data</span>
+        <span>{s.caption}</span>
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  .sample {
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .sample__paper {
+    border-radius: 1px;
+    box-shadow: var(--shadow-paper);
+    overflow: hidden;
+    background: var(--ivory-100);
+  }
+  .sample img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .sample figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    font-size: var(--text-sm);
+    color: var(--ink-2);
+  }
+</style>

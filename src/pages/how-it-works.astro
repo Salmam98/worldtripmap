@@ -1,0 +1,81 @@
+---
+import Page from '../layouts/Page.astro';
+---
+
+<Page
+  title="How WorldTripMap Works: Make a Travel Map in Four Steps"
+  description="How to make a travel map with WorldTripMap: choose a map, mark the places you have visited, design a poster, then download or share it. No account needed."
+  h1="How it works"
+  lede="Four steps take you from an empty map to a poster on your wall. Nothing needs an account, and nothing you mark leaves your device unless you share it."
+  crumb="How it works"
+  path="/how-it-works/"
+>
+  <h2>1. Choose your map</h2>
+  <p>
+    There are three levels. The <a href="/maps/world/">world map</a> counts countries. The <a href="/maps/canada/">Canada map</a> counts
+    provinces and territories. The <a href="/maps/canada-cities/">Canadian cities map</a> counts 45 major cities. Each keeps its own
+    progress, so you can use one or all three. More countries are planned, and they are labelled “Coming soon” on the{' '}
+    <a href="/maps/">maps page</a> until they work fully.
+  </p>
+
+  <h2>2. Select the places you’ve visited</h2>
+  <p>You can mark a place in three ways, and they all do the same thing:</p>
+  <ul>
+    <li><strong>Tap or click it on the map.</strong> Small places get a round marker so they are easy to hit, and the map zooms with the plus button, a pinch, or Ctrl and the scroll wheel.</li>
+    <li><strong>Tick it in the list.</strong> The list is grouped by continent or region and has a search box that understands other names, so “Holland” finds the Netherlands and “PEI” finds Prince Edward Island.</li>
+    <li><strong>Use the keyboard.</strong> Tab to the map, move between places with the arrow keys, and press Space to mark one.</li>
+  </ul>
+  <p>
+    Switch the map to <em>Want to go</em> to build a bucket list. Those places are drawn with stripes, so they are never confused with
+    places you have been. <em>Undo</em> steps back one change at a time, and <em>Start over</em> asks before it clears anything.
+  </p>
+  <p>
+    As you mark places, the panel shows your count, your percentage and a breakdown by continent or region. It also shows your
+    achievements. Each achievement states its rule, such as “Mark at least one province or territory in each of Canada’s five regions”,
+    so you can see exactly why you have it or what is left.
+  </p>
+
+  <h2>3. Personalize your design</h2>
+  <p>
+    Choose <em>Design my poster</em> to open the poster studio with your places already in it. Pick one of four designs, then change what
+    you like:
+  </p>
+  <ul>
+    <li>the title, an optional subtitle, your name or nickname, dates and a short caption,</li>
+    <li>the colour used for the places you have explored, from a set chosen to suit each design,</li>
+    <li>the title lettering: serif, sans-serif or handwritten,</li>
+    <li>whether to show map labels, the list of places, your bucket list, and an achievement seal you have earned.</li>
+  </ul>
+  <p>The preview updates as you type, and it is drawn by the same code that makes the file, so what you see is what you download.</p>
+
+  <h2>4. Download and share</h2>
+  <ul>
+    <li><strong>PNG</strong> for sharing: a 4:5 post, a 9:16 story or a 2:3 pin, at standard size or twice the detail.</li>
+    <li><strong>PDF</strong> for print: 8 × 10 in, 18 × 24 in, 24 × 18 in or A3. It is a vector file, so it also prints sharp at other sizes with the same proportions.</li>
+    <li><strong>Share image</strong> hands the picture to your phone’s share sheet where the browser supports that, and saves it otherwise.</li>
+    <li><strong>Share</strong> and <strong>Challenge a friend</strong> on the map page give you a link. A friend who opens a challenge link marks their own map and then sees both side by side.</li>
+  </ul>
+
+  <h2>Where your map is kept</h2>
+  <p>
+    Your marks and poster settings are saved in your browser’s storage on the device you are using. There is no account and no copy on a
+    server. The map page shows “Saved on this device” when a save has worked, and warns you if your browser is blocking storage.
+  </p>
+  <p>
+    A share link works differently from most: the places you marked are written into the link itself, after the “#”. Browsers do not send
+    that part of a link to a web server, so we never receive it. It also means there is no stored copy for us to delete. If you want to
+    stop sharing a map, stop passing the link around.
+  </p>
+  <p>To move your map to another phone or computer, open <em>Share</em>, send yourself the link, and open it on the other device.</p>
+
+  <h2>What the numbers mean</h2>
+  <p>
+    Every percentage on WorldTripMap is a count of places divided by the number of places on that map. It is never a share of land area,
+    population or things to see. The <a href="/methodology/">data and methods page</a> lists the counting rules and the sources for each
+    map.
+  </p>
+
+  <p>
+    <a class="btn btn--forest" href="/maps/">Choose a map</a>
+  </p>
+</Page>

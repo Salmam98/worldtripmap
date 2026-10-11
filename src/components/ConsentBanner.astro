@@ -1,0 +1,70 @@
+---
+/** Shown only when Google Analytics is configured and the visitor has not chosen yet. */
+import { SITE } from '../lib/site';
+
+const show = SITE.analytics === 'ga4' && SITE.ga4Id;
+---
+
+{
+  show && (
+    <div class="consent" id="consent" role="region" aria-label="Analytics choice" hidden>
+      <p>
+        We would like to count visits with Google Analytics to see which maps people use. It sets cookies. Your
+        maps are never sent to us either way. <a href="/privacy/">Privacy details</a>
+      </p>
+      <div class="consent__actions">
+        <button class="btn btn--sm btn--quiet" type="button" data-consent="denied">
+          No thanks
+        </button>
+        <button class="btn btn--sm btn--gold" type="button" data-consent="granted">
+          Allow analytics
+        </button>
+      </div>
+    </div>
+  )
+}
+
+{
+  show && (
+    <script is:inline>
+      (function () {
+        var box = document.getElementById('consent');
+        var api = window.__wtmConsent;
+        if (!box || !api || api.choice) return;
+        box.hidden = false;
+        box.addEventListener('click', function (event) {
+          var button = event.target.closest('[data-consent]');
+          if (!button) return;
+          api.set(button.getAttribute('data-consent'));
+          box.hidden = true;
+        });
+      })();
+    </script>
+  )
+}
+
+<style>
+  .consent {
+    position: fixed;
+    inset: auto 1rem 1rem 1rem;
+    z-index: 60;
+    max-width: 34rem;
+    margin-inline: auto;
+    padding: 1rem 1.1rem;
+    display: grid;
+    gap: 0.75rem;
+    background: var(--navy-900);
+    color: var(--ivory-50);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-3);
+    font-size: var(--text-sm);
+    --ink: var(--ivory-50);
+    --line-strong: rgb(248 246 240 / 0.3);
+    --focus: var(--gold-500);
+  }
+  .consent__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+</style>

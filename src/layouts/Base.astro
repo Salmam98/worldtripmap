@@ -1,0 +1,152 @@
+---
+import '../styles/global.css';
+import manropeUrl from '../assets/fonts/ui/manrope-var-latin.woff2?url';
+import serifUrl from '../assets/fonts/ui/dmserifdisplay-400-latin.woff2?url';
+import ConsentBanner from "../components/ConsentBanner.astro";
+import Analytics from '../components/Analytics.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { buildCsp } from '../lib/csp';
+import { absoluteUrl, breadcrumbLd, type Crumb } from '../lib/seo';
+import { SITE } from '../lib/site';
+
+interface Props {
+  /** The full <title>. Keep it under about 60 characters and unique per page. */
+  title: string;
+  description: string;
+  /** Social sharing image, root-relative. */
+  image?: string;
+  imageAlt?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  /** Header colour, so it can sit flush on a navy hero. */
+  tone?: 'light' | 'navy';
+  /** Trail from the home page to this page. Rendered by pages; listed here for structured data. */
+  crumbs?: Crumb[];
+  jsonLd?: object[];
+}
+
+const {
+  title,
+  description,
+  image = '/og/worldtripmap.png',
+  imageAlt = 'A travel map poster made with WorldTripMap',
+  type = 'website',
+  noindex = false,
+  tone = 'light',
+  crumbs,
+  jsonLd = [],
+} = Astro.props;
+
+const canonical = absoluteUrl(Astro.url.pathname, Astro.site);
+const csp = SITE.csp ? buildCsp({ analytics: SITE.analytics, plausibleSrc: SITE.plausibleSrc, contactEndpoint: SITE.contactEndpoint }) : '';
+const structured = [...jsonLd, ...(crumbs && crumbs.length > 1 ? [breadcrumbLd(crumbs, Astro.site)] : [])];
+---
+
+<!doctype html>
+<html lang="en-CA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {csp && <meta http-equiv="Content-Security-Policy" content={csp} />}
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex ? <meta name="robots" content="noindex, follow" /> : <link rel="canonical" href={canonical} />}
+    {SITE.gscVerification && <meta name="google-site-verification" content={SITE.gscVerification} />}
+
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {!noindex && <meta property="og:url" content={canonical} />}
+    <meta property="og:image" content={absoluteUrl(image, Astro.site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={imageAlt} />
+    <meta property="og:locale" content="en_CA" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={absoluteUrl(image, Astro.site)} />
+    <meta name="twitter:image:alt" content={imageAlt} />
+
+    <meta name="theme-color" content="#101B2D" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <link rel="preload" href={manropeUrl} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={serifUrl} as="font" type="font/woff2" crossorigin />
+
+    {structured.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
+    <Analytics />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header tone={tone} />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+    <ConsentBanner />
+    <script is:inline>
+      // An interactive part replaces its placeholder when it starts. A placeholder still in place
+      // well after the page has loaded means its script never arrived, so say so and offer a reload.
+      (function () {
+        function check() {
+          var waiting = document.querySelectorAll('[data-loading]:not([data-lazy] [data-loading])');
+          for (var i = 0; i < waiting.length; i++) {
+            waiting[i].setAttribute('data-loading', 'failed');
+            var standIn = waiting[i].closest('[data-placeholder]');
+            if (standIn) standIn.classList.add('is-failed');
+          }
+        }
+        window.addEventListener('load', function () {
+          setTimeout(check, 12000);
+        });
+        document.addEventListener('click', function (event) {
+          var target = event.target;
+          if (target && target.closest && target.closest('[data-reload]')) window.location.reload();
+        });
+
+        // Wide tables and the poster row scroll sideways on small screens, so they can take keyboard
+        // focus. Where everything already fits, that extra stop is removed. A resize observer
+        // reports each one (and what is inside it, which grows when the web fonts arrive) once the
+        // page is laid out and again on every change of size, so nothing here makes the browser
+        // stop and measure the page.
+        var SCROLLERS = '.table-scroll, [data-scroller]';
+        var regions = document.querySelectorAll(SCROLLERS);
+        function tidy(list) {
+          var scrolls = [];
+          for (var i = 0; i < list.length; i++) scrolls.push(list[i].scrollWidth > list[i].clientWidth + 2);
+          for (var j = 0; j < list.length; j++) {
+            if (scrolls[j]) list[j].setAttribute('tabindex', '0');
+            else list[j].removeAttribute('tabindex');
+          }
+        }
+        if (typeof ResizeObserver === 'function') {
+          var watcher = new ResizeObserver(function (entries) {
+            var changed = [];
+            for (var i = 0; i < entries.length; i++) {
+              var region = entries[i].target.closest(SCROLLERS);
+              if (region && changed.indexOf(region) < 0) changed.push(region);
+            }
+            tidy(changed);
+          });
+          for (var k = 0; k < regions.length; k++) {
+            watcher.observe(regions[k]);
+            if (regions[k].firstElementChild) watcher.observe(regions[k].firstElementChild);
+          }
+        } else {
+          window.addEventListener('load', function () {
+            tidy(regions);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

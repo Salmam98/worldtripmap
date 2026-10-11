@@ -1,0 +1,245 @@
+---
+import Page from '../layouts/Page.astro';
+import { SITE } from '../lib/site';
+
+const updated = new Date(SITE.legalUpdated).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+---
+
+<Page
+  title="Privacy | WorldTripMap"
+  description="WorldTripMap has no accounts and does not upload your maps. This page explains what stays on your device, what a share link contains, and what we measure."
+  h1="Privacy"
+  lede="The short version: there are no accounts, your maps stay in your own browser, and we do not sell or share personal information."
+  crumb="Privacy"
+  path="/privacy/"
+>
+  <p class="muted">Last updated {updated}.</p>
+
+  <h2>Your maps and posters</h2>
+  <p>
+    The places you mark, your bucket list, your poster settings and the display name you type are saved in your browser’s local storage
+    on the device you are using. They are not sent to us and we cannot see them. Posters are drawn on your device, and the files you
+    download are created there too.
+  </p>
+  <p>
+    <em>Start over</em> on a map clears the places marked on that map. To remove everything this site has saved on this device,
+    including poster settings and your display name, use the button below or clear this site’s data in your browser settings.
+  </p>
+  <div class="erase" id="erase" hidden>
+    <p>
+      <button class="btn btn--sm btn--quiet" type="button" id="erase-start">Delete everything saved on this device</button>
+    </p>
+    <div class="erase__confirm" id="erase-confirm" hidden>
+      <p>This removes your maps, bucket lists, poster settings and display name from this browser. It cannot be undone.</p>
+      <p class="erase__actions">
+        <button class="btn btn--sm btn--danger" type="button" id="erase-yes">Delete it all</button>
+        <button class="btn btn--sm btn--quiet" type="button" id="erase-no">Keep my maps</button>
+      </p>
+    </div>
+    <p class="erase__status" id="erase-status" role="status"></p>
+  </div>
+  <p>The items stored are:</p>
+  <ul>
+    <li><code>wtm:v1:map:…</code>: the places marked on each map</li>
+    <li><code>wtm:v1:places:…</code>: the places you ticked inside provinces and territories</li>
+    <li><code>wtm:v1:poster:…</code>: your poster design choices for each map</li>
+    <li><code>wtm:v1:profile</code>: the display name you last typed</li>
+    <li>
+      <code>wtm:v1:rollup-dismissed:…</code>: a note that you dismissed a suggestion, kept only until you close the tab
+    </li>
+    {SITE.analytics === 'ga4' && <li><code>wtm:v1:consent</code>: whether you allowed analytics</li>}
+  </ul>
+
+  <h2>Share and challenge links</h2>
+  <p>
+    When you choose <em>Share</em> or <em>Challenge a friend</em>, the places you marked as explored on that map (not the places ticked
+    inside a province), and your display name if you added
+    one, are written into the link itself, in the part after the “#”. Browsers do not send that part of a link to web servers, so it
+    does not reach us.
+  </p>
+  <p>
+    Anyone who has the link can see what is in it. Because no copy is kept on a server, there is nothing for us to delete or revoke: to
+    stop sharing a map, stop passing the link on. Do not put anything in the display name that you would not want the people you send
+    it to, or anyone they forward it to, to read.
+  </p>
+
+  <h2>What we measure</h2>
+  {
+    SITE.analytics === 'none' && (
+      <p>This site does not use analytics, advertising trackers or cookies.</p>
+    )
+  }
+  {
+    SITE.analytics === 'plausible' && (
+      <p>
+        We use Plausible Analytics to count visits. It does not use cookies, does not store your IP address, and does not follow you to
+        other sites. We see totals, such as how many times a page was opened and which country and type of device visits came from.
+      </p>
+    )
+  }
+  {
+    SITE.analytics === 'ga4' && (
+      <>
+        <p>
+          If you choose <em>Allow analytics</em>, we use Google Analytics 4 to count visits. It sets cookies and sends usage information
+          to Google. If you choose <em>No thanks</em>, it is never loaded. You can change your mind at any time:
+        </p>
+        <p>
+          <button class="btn btn--sm btn--quiet" type="button" id="reset-consent">
+            Change my analytics choice
+          </button>
+        </p>
+      </>
+    )
+  }
+  {
+    SITE.analytics !== 'none' && (
+      <>
+        <p>We also count these actions, so we know which parts of the site are used:</p>
+        <ul>
+          <li>the home page was opened, and a map was started or completed,</li>
+          <li>a place was marked (the map and the running count, never which place),</li>
+          <li>a poster was customized, or downloaded as PNG or PDF (the map, the design and the shape),</li>
+          <li>a share was started, a challenge link was opened, or a comparison was viewed.</li>
+        </ul>
+        <p>
+          These never include your display name, the places you marked, or the contents of a share link. Page addresses are recorded
+          without the part after the “#”.
+        </p>
+      </>
+    )
+  }
+
+  <h2>Hosting</h2>
+  <p>
+    Like every website, this one is delivered by a hosting company whose servers briefly record technical details of each request, such
+    as IP address, time, the page requested and the browser used, to keep the service secure and working. We do not combine those
+    records with anything else. Fonts and images are served from this site, so opening a page does not contact any other company
+    {SITE.analytics === 'none' ? '.' : ' apart from the analytics service described above.'}
+  </p>
+
+  <h2>If you contact us</h2>
+  <p>
+    If you email us{SITE.contactEndpoint ? ' or use the contact form' : ''}, we use your address and message to reply and to fix what
+    you reported. We do not add you to a mailing list.
+    {SITE.contactEndpoint && ' The form is delivered to us by a form-handling service, which processes your message on our behalf.'}
+  </p>
+
+  <h2>Children</h2>
+  <p>
+    The site is suitable for general audiences and does not ask anyone for personal information. It is not directed at children under
+    13, and we do not knowingly collect information from them.
+  </p>
+
+  <h2>Your choices and rights</h2>
+  <p>
+    Because your maps are stored only on your device, you control them directly. For anything you have sent us by email, you can ask us
+    to show you what we hold, correct it or delete it by writing to <a href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>.
+  </p>
+
+  <h2>Changes</h2>
+  <p>If this page changes in a way that matters, we will update the date at the top and note what changed.</p>
+</Page>
+
+<script is:inline>
+  // Lets a visitor wipe what this site saved in their browser, and only says "deleted" after checking that it is gone.
+  (function () {
+    var box = document.getElementById('erase');
+    var start = document.getElementById('erase-start');
+    var confirmBox = document.getElementById('erase-confirm');
+    var yes = document.getElementById('erase-yes');
+    var no = document.getElementById('erase-no');
+    var status = document.getElementById('erase-status');
+    if (!box || !start || !confirmBox || !yes || !no || !status) return;
+    box.hidden = false;
+    var PREFIX = 'wtm:v1:';
+    var KEEP = 'wtm:v1:consent';
+
+    function ours(store) {
+      var keys = [];
+      for (var i = 0; i < store.length; i++) {
+        var key = store.key(i) || '';
+        if (key.indexOf(PREFIX) === 0 && key !== KEEP) keys.push(key);
+      }
+      return keys;
+    }
+    function reset() {
+      confirmBox.hidden = true;
+      start.hidden = false;
+    }
+
+    start.addEventListener('click', function () {
+      status.textContent = '';
+      start.hidden = true;
+      confirmBox.hidden = false;
+      no.focus();
+    });
+    no.addEventListener('click', function () {
+      reset();
+      start.focus();
+    });
+    yes.addEventListener('click', function () {
+      var left = -1;
+      try {
+        [window.localStorage, window.sessionStorage].forEach(function (store) {
+          ours(store).forEach(function (key) { store.removeItem(key); });
+        });
+        left = ours(window.localStorage).length + ours(window.sessionStorage).length;
+      } catch (e) {
+        left = -1;
+      }
+      reset();
+      status.textContent =
+        left === 0
+          ? 'Deleted. Nothing from your maps or posters is saved on this device now.'
+          : 'Your browser did not let this page change its storage, so nothing was deleted. Clear this site’s data in your browser settings instead.';
+      start.focus();
+    });
+  })();
+</script>
+
+{
+  SITE.analytics === 'ga4' && (
+    <script is:inline>
+      (function () {
+        var button = document.getElementById('reset-consent');
+        if (!button) return;
+        button.addEventListener('click', function () {
+          try { localStorage.removeItem('wtm:v1:consent'); } catch (e) {}
+          location.reload();
+        });
+      })();
+    </script>
+  )
+}
+
+<style>
+  .erase {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .erase[hidden],
+  .erase__confirm[hidden] {
+    display: none;
+  }
+  .erase__confirm {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-control);
+    background: var(--white);
+    font-size: 1rem;
+  }
+  .erase__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .erase__status:empty {
+    display: none;
+  }
+  .erase__status {
+    font-weight: 600;
+  }
+</style>

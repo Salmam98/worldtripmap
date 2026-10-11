@@ -1,0 +1,56 @@
+---
+import Page from '../layouts/Page.astro';
+import { SITE } from '../lib/site';
+---
+
+<Page
+  title="About WorldTripMap"
+  description="WorldTripMap is a free tool for mapping where you have been and turning it into a poster. What it does, the principles behind it, and how to reach us."
+  h1="About WorldTripMap"
+  lede="WorldTripMap is a free tool for keeping track of where you have been, and for turning that record into something you would hang on a wall."
+  crumb="About"
+  path="/about/"
+>
+  <h2>What it is</h2>
+  <p>
+    You mark the countries, provinces or cities you have explored. The site counts them, shows your progress, and draws a poster from
+    them that you can download as a picture or a print-ready PDF. It launched with the world, Canada’s provinces and territories, and
+    Canadian cities. More countries will follow one at a time, each published only when its map is accurate and complete.
+  </p>
+
+  <h2>What we care about</h2>
+  <ul>
+    <li>
+      <strong>Real maps.</strong> Every place is a real geographic shape from a named, openly licensed dataset, drawn in a projection chosen
+      for that map. Nothing on the site is a decorative picture pretending to be interactive.
+    </li>
+    <li>
+      <strong>Numbers that say what they mean.</strong> A percentage is always a share of the places on the map, and the page says so
+      beside it. The <a href="/methodology/">data and methods page</a> sets out every rule.
+    </li>
+    <li>
+      <strong>Your travels are yours.</strong> There is no account. Your map lives in your own browser, and share links carry the map
+      inside the link instead of on our servers. <a href="/privacy/">Privacy</a>
+    </li>
+    <li>
+      <strong>It should work for everyone.</strong> The maps can be used with a mouse, a finger, a keyboard or a screen reader, and every
+      place can also be marked from a plain list.
+    </li>
+    <li>
+      <strong>No invented praise.</strong> You will not find testimonials, user counts or star ratings here that we cannot back up.
+    </li>
+  </ul>
+
+  <h2>How the guides are written</h2>
+  <p>
+    The pieces under <a href="/guides/">Travel inspiration</a> are written for this site and checked against primary sources where they
+    exist, such as Statistics Canada and the United Nations. Each guide lists its sources and the date they were checked. Guides are
+    published under the WorldTripMap name. When we get something wrong, we correct the page and change its “updated” date.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions, corrections and ideas for the next map are welcome at <a href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a> or
+    through the <a href="/contact/">contact page</a>.
+  </p>
+</Page>

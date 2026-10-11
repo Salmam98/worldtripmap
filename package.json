@@ -1,0 +1,48 @@
+{
+  "name": "worldtripmap",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WorldTripMap: interactive travel maps and print-ready travel posters.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "preview:build": "node scripts/preview/build-preview.mjs",
+    "check": "astro check && tsc --noEmit",
+    "test": "vitest run",
+    "test:site": "vitest run --config vitest.site.config.ts",
+    "test:e2e": "playwright test",
+    "test:all": "npm run check && npm test && npm run build && npm run test:site && npm run test:e2e",
+    "geo:fetch": "tsx scripts/geo/fetch-sources.ts",
+    "geo:build": "tsx scripts/geo/build-geo.ts",
+    "assets:build": "tsx scripts/assets/build-assets.ts",
+    "checklists:build": "tsx scripts/assets/build-checklists.ts",
+    "guides:sync": "tsx scripts/content/sync-guides.ts",
+    "fonts:build": "python3 scripts/fonts/build_fonts.py"
+  },
+  "dependencies": {
+    "@astrojs/preact": "^6.0.6",
+    "astro": "^7.3.8",
+    "opentype.js": "^1.3.4",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.64.0",
+    "@types/d3-geo": "^3.1.1",
+    "@types/node": "^26.6.5",
+    "d3-geo": "^3.1.1",
+    "mapshaper": "^0.7.83",
+    "node-html-parser": "^9.0.4",
+    "polylabel": "^2.1.0",
+    "sharp": "^0.35.5",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

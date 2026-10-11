@@ -1,0 +1,254 @@
+---
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Faq from '../components/Faq.astro';
+import SamplePoster from '../components/SamplePoster.astro';
+import Base from '../layouts/Base.astro';
+import { MAPS, MAP_IDS, posterPath } from '../lib/maps/registry';
+import { FORMATS } from '../lib/poster/formats';
+import { TEMPLATE_LIST } from '../lib/poster/templates';
+
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Travel map posters', path: '/travel-map-poster/' },
+];
+const showcase: Record<string, string> = {
+  'midnight-atlas': 'canada-midnight-atlas',
+  'nordic-explorer': 'canada-nordic-explorer',
+  'modern-cartographer': 'canada-modern-cartographer',
+  'travel-journal': 'canada-travel-journal',
+};
+const faq = [
+  {
+    q: 'Is the download a real file or a screenshot?',
+    a: '<p>A real file. The PNG is drawn at the exact pixel size you choose, and the PDF is a vector document in which every coastline and letter is an outline. Neither is a capture of the web page.</p>',
+  },
+  {
+    q: 'What sizes can I print?',
+    a: '<p>PDFs come at 8 × 10 in, 18 × 24 in, 24 × 18 in and A3, upright or wide. Because they are vector files they also print sharp at any other size with the same proportions, such as 16 × 20 in, 12 × 16 in, A4 or A2. <a href="/guides/print-a-travel-map-poster/">How to choose a size</a>.</p>',
+  },
+  {
+    q: 'Will my fonts look right at the print shop?',
+    a: '<p>Yes. Lettering is converted to outlines before the file is made, so the print shop does not need the fonts and nothing can be substituted.</p>',
+  },
+  {
+    q: 'Can I write my name in another language?',
+    a: '<p>Yes. The built-in typefaces cover Latin, Greek and Cyrillic scripts as vectors. Text in other scripts, such as Bengali, Chinese or Arabic, is drawn with the fonts on your own device at high resolution and placed on the poster as an image.</p>',
+  },
+  {
+    q: 'Is there a watermark?',
+    a: '<p>There is a small “worldtripmap.com” mark at the bottom, and a switch to turn it off. Leaving it on helps other people find the site, which we appreciate, but it is your poster.</p>',
+  },
+  {
+    q: 'Do I need to pay or sign up to download?',
+    a: '<p>No. Designing and downloading are free and there is no account.</p>',
+  },
+];
+---
+
+<Base
+  title="Travel Map Poster Maker: PNG and Print PDF | WorldTripMap"
+  description="Design a personalized travel map poster from the places you have explored. Four designs, your own title and colours, PNG for sharing and vector PDF for print. Free."
+  image="/og/poster.png"
+  crumbs={crumbs}
+>
+  <section class="section--tight">
+    <div class="wrap">
+      <Breadcrumbs crumbs={crumbs} />
+      <div class="poster-hero">
+        <div class="poster-hero__copy">
+          <h1>A travel map poster you design yourself</h1>
+          <p class="lede">
+            Mark where you have been, choose a design, and download a poster of your own travels: a PNG sized for sharing, or a
+            vector PDF that prints sharp at any size.
+          </p>
+          <div class="poster-hero__actions">
+            {
+              MAP_IDS.map((id, i) => (
+                <a class:list={['btn', i > 0 && 'btn--quiet']} href={posterPath(MAPS[id])}>
+                  {id === 'world' ? 'World poster' : id === 'canada' ? 'Canada poster' : 'Canadian cities poster'}
+                </a>
+              ))
+            }
+          </div>
+          <p class="small muted">Free, with no account. Posters are made on your device and never uploaded.</p>
+        </div>
+        <div class="poster-hero__art">
+          <SamplePoster id="world-midnight-atlas" sizes="(min-width: 64rem) 36rem, 92vw" eager />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper" aria-labelledby="designs">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="designs">Four designs</h2>
+        <p class="lede">
+          Each can be recoloured from a small set of colours chosen to work with it, and set in serif, sans-serif or handwritten
+          lettering.
+        </p>
+      </div>
+      <ul class="designs">
+        {
+          TEMPLATE_LIST.map((template) => (
+            <li>
+              <SamplePoster id={showcase[template.id]} sizes="(min-width: 64rem) 17rem, (min-width: 40rem) 44vw, 92vw" caption={false} />
+              <h3>{template.name}</h3>
+              <p>{template.blurb}</p>
+              <p class="designs__sample">
+                <span class="tag tag--sample">Sample data</span>
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="sizes">
+    <div class="wrap sizes">
+      <div class="section-head">
+        <h2 id="sizes">Shapes and sizes</h2>
+        <p class="lede">The same poster in seven shapes. Pick the one that matches where it is going.</p>
+      </div>
+      <div class="table-scroll" role="region" aria-label="Poster shapes and sizes" tabindex="0">
+        <table class="sizes__table">
+          <thead>
+            <tr>
+              <th scope="col">Shape</th>
+              <th scope="col">Made for</th>
+              <th scope="col">PNG sizes (pixels)</th>
+              <th scope="col">PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              FORMATS.map((format) => (
+                <tr>
+                  <th scope="row">{format.name}</th>
+                  <td>{format.detail}</td>
+                  <td class="num">{format.png.map((p) => `${p.width.toLocaleString('en-CA')} × ${p.height.toLocaleString('en-CA')}`).join(' and ')}</td>
+                  <td>{format.pdf ? format.pdf.name : 'Not offered'}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">
+        PDFs are vector files in sRGB colour, with an optional 3 mm bleed for print shops.{' '}
+        <a href="/guides/print-a-travel-map-poster/">How to print a travel map poster</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--paper" aria-labelledby="poster-faq">
+    <div class="wrap poster-faq">
+      <h2 id="poster-faq">Questions about posters</h2>
+      <Faq items={faq} />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .poster-hero {
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-bottom: clamp(1rem, 4vw, 3rem);
+  }
+  @media (min-width: 64rem) {
+    .poster-hero {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 4rem;
+    }
+  }
+  .poster-hero__copy {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+  }
+  .poster-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .designs {
+    display: grid;
+    gap: 3rem 2rem;
+    list-style: none;
+  }
+  @media (min-width: 40rem) {
+    .designs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 64rem) {
+    .designs {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  /* Each design spans four shared rows, so posters of different shapes stand on one line and the text under them lines up. */
+  .designs li {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    row-gap: 0.5rem;
+  }
+  .designs li > :first-child {
+    align-self: end;
+  }
+  .designs h3 {
+    margin-top: 0.9rem;
+    font-family: var(--font-serif);
+    font-size: var(--text-2xl);
+    font-weight: 400;
+  }
+  .designs p {
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+  .designs__sample {
+    margin-top: 0.25rem;
+  }
+  .sizes__table {
+    width: 100%;
+    min-width: 40rem;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+  .sizes__table th,
+  .sizes__table td {
+    padding: 0.75rem 1.25rem 0.75rem 0;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .sizes__table thead th {
+    font-size: var(--text-xs);
+    color: var(--ink-2);
+    border-bottom-color: var(--navy-900);
+  }
+  .sizes__table tbody th {
+    white-space: nowrap;
+  }
+  .sizes__table td {
+    color: var(--ink-2);
+  }
+  .sizes .small {
+    margin-top: 1.25rem;
+  }
+  .sizes .small a {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .table-scroll {
+    overflow-x: auto;
+  }
+  .poster-faq {
+    display: grid;
+    gap: 1.75rem;
+    max-width: 52rem;
+  }
+</style>

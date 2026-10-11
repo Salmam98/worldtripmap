@@ -1,0 +1,108 @@
+---
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import StudioPlaceholder from '../../../components/StudioPlaceholder.astro';
+import { MAP_PAGES } from '../../../data/pages';
+import CanadaCitiesPoster from '../../../islands/CanadaCitiesPoster';
+import CanadaPoster from '../../../islands/CanadaPoster';
+import WorldPoster from '../../../islands/WorldPoster';
+import Base from '../../../layouts/Base.astro';
+import { MAPS, MAP_IDS, mapPath, posterPath } from '../../../lib/maps/registry';
+import type { MapId } from '../../../lib/maps/types';
+
+export function getStaticPaths() {
+  return MAP_IDS.map((id) => ({ params: { map: MAPS[id].slug }, props: { id } }));
+}
+
+const { id } = Astro.props as { id: MapId };
+const def = MAPS[id];
+const copy = MAP_PAGES[id];
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Maps', path: '/maps/' },
+  { name: copy.crumb, path: mapPath(def) },
+  { name: 'Poster', path: posterPath(def) },
+];
+---
+
+<Base title={copy.poster.title} description={copy.poster.description} image="/og/poster.png" crumbs={crumbs}>
+  <section class="studio-page">
+    <div class="wrap">
+      <Breadcrumbs crumbs={crumbs} />
+      <div class="studio-page__head">
+        <h1>{copy.poster.h1}</h1>
+        <p class="lede">{copy.poster.lede}</p>
+      </div>
+
+      {/* The stand-in holds the page's shape; the live studio takes its place when it has loaded. */}
+      <div data-island-host>
+        <StudioPlaceholder map={id} />
+        {id === 'canada' && <CanadaPoster client:only="preact" />}
+        {id === 'world' && <WorldPoster client:only="preact" />}
+        {id === 'canada-cities' && <CanadaCitiesPoster client:only="preact" />}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper" aria-labelledby="print-notes">
+    <div class="wrap studio-notes">
+      <h2 id="print-notes">Before you print</h2>
+      <ul>
+        <li>
+          <h3>Use the PDF for paper</h3>
+          <p>It is a vector file, so coastlines and lettering stay sharp at any size, and the lettering is outlined, so no fonts can go missing at the print shop.</p>
+        </li>
+        <li>
+          <h3>Match the shape to the frame</h3>
+          <p>An upright poster fits 18 × 24 in, 12 × 16 in and 9 × 12 in frames. A post fits 8 × 10 in and 16 × 20 in. A3 files fit every A size.</p>
+        </li>
+        <li>
+          <h3>Dark designs print darker</h3>
+          <p>Paper is not lit from behind. If the poster is a gift, order one small print first. <a href="/guides/print-a-travel-map-poster/">Full printing guide</a></p>
+        </li>
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .studio-page {
+    padding-block: clamp(1.5rem, 4vw, 2.5rem) var(--section);
+  }
+  .studio-page__head {
+    display: grid;
+    gap: 0.8rem;
+    margin: 1rem 0 clamp(1.5rem, 3vw, 2.25rem);
+    max-width: 44rem;
+  }
+  .studio-page__head h1 {
+    font-size: var(--text-4xl);
+  }
+  .studio-notes h2 {
+    font-size: var(--text-3xl);
+    margin-bottom: 2rem;
+  }
+  .studio-notes ul {
+    display: grid;
+    gap: 2rem 3rem;
+    list-style: none;
+  }
+  @media (min-width: 52rem) {
+    .studio-notes ul {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .studio-notes li {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+    padding-top: 1.1rem;
+    border-top: 2px solid var(--navy-900);
+  }
+  .studio-notes p {
+    color: var(--ink-2);
+  }
+  .studio-notes a {
+    color: var(--ink);
+    font-weight: 600;
+  }
+</style>

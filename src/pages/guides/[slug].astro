@@ -1,0 +1,242 @@
+---
+import { existsSync, statSync } from 'node:fs';
+import { getCollection, render } from 'astro:content';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import MiniMap from '../../components/MiniMap.astro';
+import Base from '../../layouts/Base.astro';
+import { MAPS, mapPath, posterPath } from '../../lib/maps/registry';
+import { articleLd } from '../../lib/seo';
+
+export async function getStaticPaths() {
+  const guides = await getCollection('guides');
+  return guides.map((guide) => ({ params: { slug: guide.id }, props: { guide } }));
+}
+
+const { guide } = Astro.props;
+const { Content } = await render(guide);
+const { data } = guide;
+const def = MAPS[data.map];
+const path = `/guides/${guide.id}/`;
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Travel inspiration', path: '/guides/' },
+  { name: data.title, path },
+];
+const date = (d: Date) => d.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+const toPoster = guide.id === 'print-a-travel-map-poster';
+// Search results cut titles at about 60 characters, so the site name is added only where it fits.
+const withBrand = `${data.title} | WorldTripMap`;
+const pageTitle = withBrand.length <= 62 ? withBrand : data.title;
+// Guides on the same shelf come first in "More guides": they are the likeliest next question.
+const others = (await getCollection('guides'))
+  .filter((g) => g.id !== guide.id)
+  .sort((a, b) => Number(b.data.topic === data.topic) - Number(a.data.topic === data.topic) || a.data.order - b.data.order);
+
+// Files to print. Their size is read from the file itself, so the page never misstates it.
+const downloads = data.downloads.map((file) => {
+  const bytes = statSync(`public${file.href}`).size;
+  return { ...file, size: bytes < 1_000_000 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1_048_576).toFixed(1)} MB` };
+});
+// A picture of the sheet, made alongside the PDF by `npm run checklists:build`.
+const sheet = data.downloads[0]?.href.replace(/-(letter|a4)\.pdf$/, '');
+const sheetPicture = sheet && existsSync(`public${sheet}-240.webp`) && existsSync(`public${sheet}-480.webp`) ? sheet : null;
+if (downloads.length && sheetPicture && !data.downloadsAlt) throw new Error(`${guide.id}: add downloadsAlt to describe the picture of the printed sheet.`);
+---
+
+<Base
+  title={pageTitle}
+  description={data.description}
+  image={data.image}
+  type="article"
+  crumbs={crumbs}
+  jsonLd={[articleLd({ title: data.title, description: data.description, path, published: data.published, updated: data.updated, image: data.image }, Astro.site)]}
+>
+  <article class="article">
+    <header class="wrap wrap--narrow article__head">
+      <Breadcrumbs crumbs={crumbs} />
+      <h1>{data.title}</h1>
+      <p class="lede">{data.deck}</p>
+      <p class="article__meta">
+        By <a href="/about/">WorldTripMap</a>. Published <time datetime={data.published.toISOString().slice(0, 10)}>{date(data.published)}</time>{
+          data.updated.getTime() !== data.published.getTime() && (
+            <>
+              , updated <time datetime={data.updated.toISOString().slice(0, 10)}>{date(data.updated)}</time>
+            </>
+          )
+        }. {data.minutes} minute read.
+      </p>
+    </header>
+
+    <div class="wrap wrap--narrow">
+      {
+        downloads.length > 0 && (
+          <aside class="downloads" aria-labelledby="downloads-title">
+            {sheetPicture && (
+              <div class="downloads__sheet">
+                <img
+                  src={`${sheetPicture}-240.webp`}
+                  srcset={`${sheetPicture}-240.webp 240w, ${sheetPicture}-480.webp 480w`}
+                  sizes="7rem"
+                  width="612"
+                  height="792"
+                  alt={data.downloadsAlt}
+                  decoding="async"
+                />
+              </div>
+            )}
+            <div class="downloads__text">
+              <h2 id="downloads-title" class="downloads__label">Print it</h2>
+              <p>One page, with a box beside every name. Free to print and share.</p>
+              <ul>
+                {downloads.map((file) => (
+                  <li>
+                    <a href={file.href} type="application/pdf">
+                      {file.label}
+                    </a>{' '}
+                    <small>{file.size}</small>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </aside>
+        )
+      }
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      <aside class="article__cta" aria-label="Try the map">
+        <div class="article__cta-map">
+          <MiniMap map={data.map} lit={data.map === 'world' ? ['CAN', 'BRA', 'FRA', 'IND', 'AUS', 'ZAF', 'JPN'] : data.map === 'canada' ? ['CA-BC', 'CA-ON', 'CA-QC', 'CA-NS'] : ['toronto', 'vancouver', 'montreal', 'halifax', 'calgary']} />
+        </div>
+        <div>
+          <h2>{data.cta}</h2>
+          <p>Free, no account, and it takes a couple of minutes.</p>
+          <a class="btn btn--forest" href={toPoster ? posterPath(def) : mapPath(def)}>
+            {toPoster ? 'Open the poster studio' : `Open the ${def.id === 'world' ? 'world' : def.id === 'canada' ? 'Canada' : 'cities'} map`}
+          </a>
+        </div>
+      </aside>
+
+      {
+        data.sources.length > 0 && (
+          <section class="article__sources" aria-labelledby="sources">
+            <h2 id="sources">Sources</h2>
+            <ol>
+              {data.sources.map((source) => (
+                <li>
+                  <a href={source.url} rel="noopener">
+                    {source.title}
+                  </a>
+                  , {source.publisher}. Checked {date(data.updated)}.
+                </li>
+              ))}
+            </ol>
+          </section>
+        )
+      }
+
+      <p class="article__note">
+        Spotted something out of date? <a href="/contact/">Tell us</a> and we will check it against the sources and correct it.
+      </p>
+
+      <nav class="article__more" aria-labelledby="more-guides">
+        <h2 id="more-guides">More guides</h2>
+        <ul>
+          {
+            others.map((g) => (
+              <li>
+                <a href={`/guides/${g.id}/`}>{g.data.title}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .article {
+    padding-block: clamp(2rem, 5vw, 3.5rem) var(--section);
+  }
+  .article__head {
+    display: grid;
+    gap: 1.1rem;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+  .article__head h1 {
+    font-size: var(--text-4xl);
+  }
+  .article__meta {
+    font-size: var(--text-sm);
+    color: var(--ink-2);
+  }
+  .article__cta {
+    display: grid;
+    gap: 1.25rem 2rem;
+    align-items: center;
+    margin-top: 3.5rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--white);
+    box-shadow: var(--shadow-2);
+  }
+  @media (min-width: 36rem) {
+    .article__cta {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    }
+  }
+  .article__cta h2 {
+    font-size: var(--text-2xl);
+  }
+  .article__cta p {
+    margin: 0.5rem 0 1.1rem;
+    color: var(--ink-2);
+  }
+  .article__sources {
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line-strong);
+    font-size: 0.9375rem;
+  }
+  .article__sources h2,
+  .article__more h2 {
+    font-family: var(--font-sans);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.75rem;
+  }
+  .article__sources ol {
+    display: grid;
+    gap: 0.5rem;
+    padding-left: 1.25rem;
+    color: var(--ink-2);
+  }
+  .article__sources a,
+  .article__note a,
+  .article__more a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+  .article__note {
+    margin-top: 1.5rem;
+    font-size: var(--text-sm);
+    color: var(--ink-2);
+  }
+  .article__more {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line-strong);
+  }
+  .article__more ul {
+    display: grid;
+    gap: 0.5rem;
+    list-style: none;
+    font-weight: 600;
+  }
+</style>

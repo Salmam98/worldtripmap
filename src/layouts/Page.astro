@@ -1,0 +1,50 @@
+---
+/** A plain reading page: breadcrumb, headline, intro and long-form text. */
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import type { Crumb } from '../lib/seo';
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  h1: string;
+  lede?: string;
+  crumb: string;
+  path: string;
+  image?: string;
+  noindex?: boolean;
+  jsonLd?: object[];
+}
+
+const { title, description, h1, lede, crumb, path, image, noindex, jsonLd } = Astro.props;
+const crumbs: Crumb[] = [
+  { name: 'Home', path: '/' },
+  { name: crumb, path },
+];
+---
+
+<Base title={title} description={description} image={image} noindex={noindex} crumbs={crumbs} jsonLd={jsonLd}>
+  <div class="page">
+    <header class="wrap wrap--narrow page__head">
+      <Breadcrumbs crumbs={crumbs} />
+      <h1>{h1}</h1>
+      {lede && <p class="lede">{lede}</p>}
+    </header>
+    <div class="wrap wrap--narrow">
+      <div class="prose">
+        <slot />
+      </div>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .page {
+    padding-block: clamp(2rem, 5vw, 3.5rem) var(--section);
+  }
+  .page__head {
+    display: grid;
+    gap: 1.1rem;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+</style>

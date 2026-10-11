@@ -1,0 +1,4 @@
+# Permanent redirects for Netlify and Cloudflare Pages. Vercel reads vercel.json instead.
+/canada   /maps/canada/          301
+/world    /maps/world/           301
+/poster   /travel-map-poster/    301
