@@ -27,11 +27,19 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: npm run build
+      - id: pages
+        uses: actions/configure-pages@v5
+      # With a custom domain the site lives at the top of the address and gets the real build.
+      - if: steps.pages.outputs.base_path == ''
+        run: npm run build
         env:
-          # The address the site is served from. To use another domain, set a repository
-          # variable named SITE_URL (Settings -> Secrets and variables -> Actions -> Variables).
-          SITE_URL: ${{ vars.SITE_URL || 'https://worldtripmap.com' }}
+          # To use a domain other than worldtripmap.com, set a repository variable named
+          # SITE_URL (Settings -> Secrets and variables -> Actions -> Variables).
+          SITE_URL: ${{ vars.SITE_URL || steps.pages.outputs.origin }}
+      # Without one it lives in a sub-folder (user.github.io/repo/), where only the preview copy
+      # works: relative addresses, marked as a preview, hidden from search engines.
+      - if: steps.pages.outputs.base_path != ''
+        run: npm run preview:build && rm -rf dist && mv dist-preview dist
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
