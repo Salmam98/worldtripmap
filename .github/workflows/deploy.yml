@@ -35,7 +35,7 @@ jobs:
         env:
           # To use a domain other than worldtripmap.com, set a repository variable named
           # SITE_URL (Settings -> Secrets and variables -> Actions -> Variables).
-          SITE_URL: ${{ vars.SITE_URL || steps.pages.outputs.origin }}
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}', steps.pages.outputs.host) }}
       # Without one it lives in a sub-folder (user.github.io/repo/), where only the preview copy
       # works: relative addresses, marked as a preview, hidden from search engines.
       - if: steps.pages.outputs.base_path != ''
