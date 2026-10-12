@@ -35,6 +35,8 @@ const OUT = process.argv[2] ?? 'pins';
 const W = 1000;
 const H = 1500;
 const SITE = 'https://worldtripmap.com';
+/** Pixels per layout unit: pins are laid out at 1000 × 1500 and saved at twice that. */
+const PX = Number(process.env.PIN_SCALE ?? 2);
 
 const json = async (name: string) => JSON.parse(await readFile(`src/data/maps/${name}`, 'utf8'));
 
@@ -139,14 +141,14 @@ async function buildPin(spec: PinSpec, fonts: FontSet): Promise<Buffer> {
 
   const overlays = await spec.art(p, fonts, { top: y + 20, bottom: ctaY - 90 }, t);
   const scene: Scene = { width: W, height: H, bleed: 0, background: t.paper, nodes: p.nodes, description: spec.lines.join(' ') };
-  const base = await sceneToPng(scene, W);
+  const base = await sceneToPng(scene, W * PX);
   const layers: OverlayOptions[] = [];
   for (const o of overlays) {
     if (o.shadow !== false) {
-      const s = await shadow(o.w, o.h);
-      layers.push({ input: s.input, left: Math.round(o.x - s.pad), top: Math.round(o.y - s.pad) });
+      const s = await shadow(Math.round(o.w * PX), Math.round(o.h * PX), 22 * PX);
+      layers.push({ input: s.input, left: Math.round(o.x * PX - s.pad), top: Math.round(o.y * PX - s.pad) });
     }
-    layers.push({ input: o.png, left: Math.round(o.x), top: Math.round(o.y) });
+    layers.push({ input: o.png, left: Math.round(o.x * PX), top: Math.round(o.y * PX) });
   }
   return sharp(base).composite(layers).png({ compressionLevel: 9 }).toBuffer();
 }
@@ -200,11 +202,10 @@ function posterArt(ids: string[]) {
         w = maxW;
         h = w * ratio;
       }
-      const png = await sceneToPng(scene, Math.round(w));
-      const meta2 = await sharp(png).metadata();
+      const png = await sceneToPng(scene, Math.round(w * PX));
       const x = n === 1 ? (W - w) / 2 : i === 0 ? 80 : W - 80 - w;
-      const y = n === 1 ? area.top + (avail - h) / 2 : i === 0 ? area.top : area.bottom - meta2.height!;
-      out.push({ png, x, y, w: meta2.width!, h: meta2.height! });
+      const y = n === 1 ? area.top + (avail - h) / 2 : i === 0 ? area.top : area.bottom - h;
+      out.push({ png, x, y, w: w, h: h });
     }
     return out;
   };
@@ -219,9 +220,8 @@ function sheetArt(which: 'parks' | 'countries') {
     const avail = area.bottom - area.top;
     const h = Math.min(avail, (W - 200) * (792 / 612));
     const w = h * (612 / 792);
-    const png = await sceneToPng(scene, Math.round(w));
-    const m = await sharp(png).metadata();
-    return [{ png, x: (W - m.width!) / 2, y: area.top + (avail - m.height!) / 2, w: m.width!, h: m.height! }];
+    const png = await sceneToPng(scene, Math.round(w * PX));
+    return [{ png, x: (W - w) / 2, y: area.top + (avail - h) / 2, w, h }];
   };
 }
 
