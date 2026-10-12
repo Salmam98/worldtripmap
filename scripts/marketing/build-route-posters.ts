@@ -197,7 +197,7 @@ async function poster(spec: Spec): Promise<Buffer> {
   p.text('worldtripmap.com', W / 2, H - 92, { ...label(24, pal.ink), anchor: 'middle', tracking: 260 });
 
   const scene: Scene = { width: W, height: H, bleed: 0, background: pal.paper, nodes: p.nodes, description: spec.title.join(' ') };
-  return sharp(Buffer.from(sceneToSvg(scene, { pixelWidth: W })), { limitInputPixels: false }).png({ compressionLevel: 9 }).toBuffer();
+  return sharp(Buffer.from(sceneToSvg(scene, { pixelWidth: 2000 })), { limitInputPixels: false }).png({ compressionLevel: 9 }).toBuffer();
 }
 
 // ------------------------------------------------------------- the journeys
@@ -338,6 +338,5 @@ await mkdir(OUT, { recursive: true });
 for (const spec of [VERNE, MAGELLAN, TCH]) {
   const png = await poster(spec);
   await writeFile(`${OUT}/${spec.id}.png`, png);
-  await sharp(png).resize(1000, 1500).png({ compressionLevel: 9 }).toFile(`${OUT}/${spec.id}-pin.png`);
   console.log(spec.id);
 }
