@@ -15,6 +15,8 @@ export const SITE = {
   plausibleSrc: (env.PUBLIC_PLAUSIBLE_SRC as string | undefined) || 'https://plausible.io/js/script.js',
   ga4Id: (env.PUBLIC_GA4_ID as string | undefined) || '',
   gscVerification: (env.PUBLIC_GSC_VERIFICATION as string | undefined) || '',
+  /** Pinterest's site claim. Public by design: it only proves the domain belongs to the Pinterest account. */
+  pinterestVerification: (env.PUBLIC_PINTEREST_VERIFICATION as string | undefined) || '11b5a47b33f55f57d290f575b0ce9847',
   /** Set PUBLIC_CSP=off to leave out the Content Security Policy, e.g. to run an ad network. */
   csp: (env.PUBLIC_CSP as string | undefined) !== 'off',
   /** Date the legal pages were last revised. */
